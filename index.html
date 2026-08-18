@@ -5,76 +5,186 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>법인세법 완전정복</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .lock-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #1A237E, #283593);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .lock-box {
+      background: white;
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .lock-box .lock-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .lock-box h2 {
+      font-size: 1.2rem;
+      color: #1A237E;
+      margin-bottom: 6px;
+    }
+
+    .lock-box p {
+      font-size: 0.82rem;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    .lock-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #C5CAE9;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      text-align: center;
+      letter-spacing: 4px;
+      font-family: inherit;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .lock-input:focus { border-color: #1A237E; }
+    .lock-input.wrong { border-color: #E53935; animation: shake 0.3s; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
+    }
+
+    .lock-btn {
+      width: 100%;
+      padding: 14px;
+      background: #1A237E;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .lock-btn:hover { background: #283593; }
+
+    .wrong-msg {
+      color: #E53935;
+      font-size: 0.82rem;
+      margin-top: 8px;
+      min-height: 20px;
+    }
+
+    .main-content { display: none; }
+    .main-content.unlocked { display: block; }
+  </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>⚖️ 법인세법 완전정복</h1>
-  <div class="sub">2026 세법강의 필기노트 원문 기반</div>
+<!-- 잠금 화면 -->
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <div class="lock-icon">🔐</div>
+    <h2>법인세법 완전정복</h2>
+    <p>비밀번호를 입력하세요</p>
+    <input type="password"
+           class="lock-input"
+           id="pwInput"
+           placeholder="••••"
+           maxlength="20"
+           onkeydown="if(event.key==='Enter') checkPw()">
+    <button class="lock-btn" onclick="checkPw()">🔓 입장하기</button>
+    <div class="wrong-msg" id="wrongMsg"></div>
+  </div>
 </div>
 
-<div class="container">
+<!-- 메인 콘텐츠 (잠금 해제 후 표시) -->
+<div class="main-content" id="mainContent">
 
-  <!-- D-Day -->
-  <div class="dday-badge">
-    <div class="dday-num" id="ddayNum">D-???</div>
-    <div class="dday-label">1차 시험 | 2027년 4월 24일 (토)</div>
+  <div class="header">
+    <h1>⚖️ 법인세법 완전정복</h1>
+    <div class="sub">2026 세법강의 필기노트 원문 기반</div>
   </div>
 
-  <!-- 전체 진도 -->
-  <div class="card">
-    <div class="card-title">📊 전체 학습 진도</div>
-    <div id="totalProgressWrap">
-      <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:#555;margin-bottom:4px;">
+  <div class="container">
+
+    <!-- D-Day -->
+    <div class="dday-badge">
+      <div class="dday-num" id="ddayNum">D-???</div>
+      <div class="dday-label">1차 시험 | 2027년 4월 24일 (토)</div>
+    </div>
+
+    <!-- 전체 진도 -->
+    <div class="card">
+      <div class="card-title">📊 전체 학습 진도</div>
+      <div style="display:flex;justify-content:space-between;
+                  font-size:0.85rem;color:#555;margin-bottom:4px;">
         <span>전체 정답률</span>
         <span id="totalPctLabel">0%</span>
       </div>
       <div class="progress-wrap">
-        <div class="progress-bar" id="totalProgressBar" style="width:0%"></div>
+        <div class="progress-bar" id="totalProgressBar"
+             style="width:0%"></div>
       </div>
     </div>
+
+    <!-- 챕터 선택 -->
+    <div class="card">
+      <div class="card-title">📚 챕터 선택</div>
+      <div class="chapter-grid" id="chapterGrid"></div>
+    </div>
+
+    <!-- 학습 유형 선택 -->
+    <div class="card" id="typeCard" style="display:none;">
+      <div class="card-title" id="typeCardTitle">📝 학습 유형 선택</div>
+      <div class="type-grid" id="typeGrid"></div>
+    </div>
+
+    <!-- 오늘의 오답 복습 -->
+    <div class="card" id="todayWrongCard">
+      <div class="card-title">🔁 오답 복습 (최근 20개)</div>
+      <div id="todayWrongList"></div>
+    </div>
+
   </div>
 
-  <!-- 챕터 선택 -->
-  <div class="card">
-    <div class="card-title">📚 챕터 선택</div>
-    <div class="chapter-grid" id="chapterGrid"></div>
-  </div>
-
-  <!-- 학습 유형 선택 -->
-  <div class="card" id="typeCard" style="display:none;">
-    <div class="card-title" id="typeCardTitle">📝 학습 유형 선택</div>
-    <div class="type-grid" id="typeGrid"></div>
-  </div>
-
-  <!-- 오늘의 오답 복습 -->
-  <div class="card" id="todayWrongCard">
-    <div class="card-title">🔁 오답 복습 (최근 20개)</div>
-    <div id="todayWrongList"></div>
+  <!-- 하단 네비게이션 -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="location.href='index.html'">
+      <span class="icon">🏠</span>홈
+    </button>
+    <button class="nav-btn" onclick="location.href='ox.html'">
+      <span class="icon">⭕</span>OX
+    </button>
+    <button class="nav-btn" onclick="location.href='choice.html'">
+      <span class="icon">📝</span>4지선다
+    </button>
+    <button class="nav-btn" onclick="location.href='blank.html'">
+      <span class="icon">✏️</span>빈칸
+    </button>
+    <button class="nav-btn" onclick="location.href='progress.html'">
+      <span class="icon">📈</span>진도
+    </button>
   </div>
 
 </div>
 
-<!-- 하단 네비게이션 -->
-<div class="bottom-nav">
-  <button class="nav-btn active" onclick="location.href='index.html'">
-    <span class="icon">🏠</span>홈
-  </button>
-  <button class="nav-btn" onclick="location.href='ox.html'">
-    <span class="icon">⭕</span>OX
-  </button>
-  <button class="nav-btn" onclick="location.href='choice.html'">
-    <span class="icon">📝</span>4지선다
-  </button>
-  <button class="nav-btn" onclick="location.href='blank.html'">
-    <span class="icon">✏️</span>빈칸
-  </button>
-  <button class="nav-btn" onclick="location.href='progress.html'">
-    <span class="icon">📈</span>진도
-  </button>
-</div>
-
-<!-- 챕터별 데이터 로드 -->
+<!-- 데이터 로드 -->
 <script src="data/ch01.js"></script>
 <script src="data/ch02.js"></script>
 <script src="data/ch03.js"></script>
@@ -90,21 +200,57 @@
 <script src="app.js"></script>
 <script>
 
-function init() {
-  // D-Day
+// ── 비밀번호 설정 (여기서 변경하세요!) ──
+const PASSWORD = '0209';  // ← 원하는 비밀번호로 바꾸세요!
+const SESSION_KEY = 'tls_auth';
+
+// ── 잠금 확인 ──
+function checkPw() {
+  const input = document.getElementById('pwInput').value;
+  if (input === PASSWORD) {
+    // 세션 저장 (브라우저 닫을 때까지 유지)
+    sessionStorage.setItem(SESSION_KEY, 'true');
+    unlock();
+  } else {
+    const inputEl = document.getElementById('pwInput');
+    inputEl.classList.add('wrong');
+    document.getElementById('wrongMsg').textContent =
+      '❌ 비밀번호가 틀렸습니다';
+    inputEl.value = '';
+    setTimeout(() => {
+      inputEl.classList.remove('wrong');
+      document.getElementById('wrongMsg').textContent = '';
+    }, 1500);
+  }
+}
+
+// ── 잠금 해제 ──
+function unlock() {
+  document.getElementById('lockScreen').style.display  = 'none';
+  document.getElementById('mainContent').classList.add('unlocked');
+  initMain();
+}
+
+// ── 이미 인증된 경우 바로 해제 ──
+function checkSession() {
+  if (sessionStorage.getItem(SESSION_KEY) === 'true') {
+    unlock();
+  } else {
+    // 입력창 포커스
+    setTimeout(() => {
+      document.getElementById('pwInput').focus();
+    }, 300);
+  }
+}
+
+// ── 메인 초기화 ──
+function initMain() {
   document.getElementById('ddayNum').textContent = getDDay();
-
-  // 전체 진도
   renderTotalProgress();
-
-  // 챕터 그리드
   renderChapterGrid();
-
-  // 오답 복습
   renderRecentWrong();
 }
 
-// ── 전체 진도 ──
 function renderTotalProgress() {
   const p = getProgress();
   let c=0, t=0;
@@ -116,7 +262,6 @@ function renderTotalProgress() {
   document.getElementById('totalProgressBar').style.width = `${pct}%`;
 }
 
-// ── 챕터 그리드 ──
 function renderChapterGrid() {
   const grid = document.getElementById('chapterGrid');
   grid.innerHTML = '';
@@ -133,10 +278,15 @@ function renderChapterGrid() {
     card.style.borderLeftColor = color;
     card.innerHTML = `
       <div class="ch-num">CH${String(i+1).padStart(2,'0')}</div>
-      <div class="ch-name" style="color:${color};">${ch.label.replace(/CH\d+\s*/,'')}</div>
-      <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">${pct}% 달성</div>
+      <div class="ch-name" style="color:${color};">
+        ${ch.label.replace(/CH\d+\s*/,'')}
+      </div>
+      <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">
+        ${pct}% 달성
+      </div>
       <div class="ch-progress">
-        <div class="ch-bar" style="width:${pct}%;background:${color};"></div>
+        <div class="ch-bar"
+             style="width:${pct}%;background:${color};"></div>
       </div>
     `;
     card.onclick = () => selectChapter(ch.key, ch.label, color);
@@ -144,95 +294,85 @@ function renderChapterGrid() {
   });
 }
 
-// ── 챕터 선택 ──
 function selectChapter(chKey, chLabel, color) {
   window.SELECTED_CH = chKey;
-
   const typeCard = document.getElementById('typeCard');
   typeCard.style.display = 'block';
   document.getElementById('typeCardTitle').textContent =
     `📝 ${chLabel} — 학습 유형 선택`;
-
-  // 스크롤
   typeCard.scrollIntoView({ behavior:'smooth', block:'start' });
-
   renderTypeGrid(chKey, color);
 }
 
-// ── 유형 그리드 ──
 function renderTypeGrid(chKey, color) {
   const grid = document.getElementById('typeGrid');
   grid.innerHTML = '';
   const ch = getChData(chKey);
-
   TYPE_LIST.forEach(type => {
     const data = ch ? (ch[type.key] || []) : [];
-    const cnt  = data.length;
-    if (cnt === 0) return; // 데이터 없는 유형 숨기기
-
+    if (!data.length) return;
     const btn = document.createElement('button');
     btn.className = 'type-btn';
     btn.style.background = type.color;
-    btn.innerHTML = `${type.icon}<br>${type.label}<br><span style="font-size:0.72rem;opacity:0.85;">${cnt}문항</span>`;
+    btn.innerHTML = `${type.icon}<br>${type.label}<br>
+      <span style="font-size:0.72rem;opacity:0.85;">
+        ${data.length}문항
+      </span>`;
     btn.onclick = () => goToType(chKey, type.key);
     grid.appendChild(btn);
   });
 }
 
-// ── 유형 페이지 이동 ──
 function goToType(chKey, typeKey) {
   const pageMap = {
-    ox:      'ox.html',
-    choice:  'choice.html',
-    blank:   'blank.html',
-    card:    'card.html',
-    compare: 'compare.html',
-    number:  'number.html',
-    flow:    'flow.html',
-    white:   'white.html',
+    ox:'ox.html', choice:'choice.html',
+    blank:'blank.html', card:'card.html',
+    compare:'compare.html', number:'number.html',
+    flow:'flow.html', white:'white.html',
   };
   const page = pageMap[typeKey];
   if (!page) return;
-  // 선택 정보 세션 저장
-  sessionStorage.setItem('sel_ch',   chKey);
+  sessionStorage.setItem('sel_ch', chKey);
   sessionStorage.setItem('sel_type', typeKey);
   location.href = page;
 }
 
-// ── 오답 복습 ──
 function renderRecentWrong() {
   const wrongs = getWrongNotes().slice(-20).reverse();
   const container = document.getElementById('todayWrongList');
-
   if (!wrongs.length) {
     container.innerHTML =
       '<div style="text-align:center;color:#aaa;padding:12px;">오답 기록이 없습니다</div>';
     return;
   }
-
   container.innerHTML = '';
-  wrongs.forEach((w,i) => {
+  wrongs.forEach(w => {
     const item = document.createElement('div');
     item.className = 'wrong-item';
-    const chLabel = CHAPTER_LIST.find(c => c.key === w.chKey)?.label || w.chKey;
+    const chLabel = CHAPTER_LIST.find(c=>c.key===w.chKey)?.label || w.chKey;
     item.innerHTML = `
       <div class="wi-q">
-        <span style="font-size:0.72rem;color:#1A237E;font-weight:bold;">${chLabel}</span><br>
-        Q. ${w.q}
+        <span style="font-size:0.72rem;color:#1A237E;font-weight:bold;">
+          ${chLabel}
+        </span><br>Q. ${w.q}
       </div>
       <div class="wi-ans">
         <span class="ans-my">내 답: ${w.myAns}</span>
         <span class="ans-correct">정답: ${w.correctAns}</span>
       </div>
       <div class="wi-exp">📖 ${w.해설}</div>
-      ${w.원문 ? `<div style="font-size:0.75rem;color:#888;margin-top:3px;">📌 원문: ${w.원문}</div>` : ''}
-      <div style="font-size:0.72rem;color:#aaa;margin-top:3px;">📅 ${w.date}</div>
+      ${w.원문?`<div style="font-size:0.75rem;color:#888;margin-top:3px;">
+        📌 원문: ${w.원문}</div>`:''}
+      <div style="font-size:0.72rem;color:#aaa;margin-top:3px;">
+        📅 ${w.date}
+      </div>
     `;
     container.appendChild(item);
   });
 }
 
-init();
+// ── 시작 ──
+checkSession();
 </script>
 
 </body>
