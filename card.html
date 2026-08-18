@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>플래시카드 | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .card-counter {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .flashcard-wrap {
+      perspective: 1000px;
+      margin: 10px 0;
+    }
+
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+      transition: transform 0.5s;
+      transform-style: preserve-3d;
+      cursor: pointer;
+    }
+
+    .flashcard-inner.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      min-height: 220px;
+      border-radius: 16px;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    .card-front {
+      background: white;
+      border: 2px solid #C5CAE9;
+    }
+
+    .card-back {
+      background: #E8EAF6;
+      border: 2px solid #3949AB;
+      transform: rotateY(180deg);
+    }
+
+    .card-front .term {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #1A237E;
+      line-height: 1.5;
+    }
+
+    .card-back .meaning {
+      font-size: 0.95rem;
+      color: #1A237E;
+      line-height: 1.8;
+      white-space: pre-line;
+    }
+
+    .card-back .source {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 10px;
+      border-top: 1px solid #C5CAE9;
+      padding-top: 8px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .flip-hint {
+      font-size: 0.75rem;
+      color: #AAA;
+      margin-top: 12px;
+    }
+
+    .card-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .btn-prev, .btn-next-card {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      color: white;
+    }
+
+    .btn-prev     { background: #546E7A; }
+    .btn-next-card { background: #1A237E; }
+    .btn-prev:disabled,
+    .btn-next-card:disabled { background: #BDBDBD; cursor: default; }
+
+    .know-wrap {
+      display: flex;
+      gap: 10px;
+      margin: 8px 0 14px;
+    }
+
+    .btn-know {
+      flex: 1;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      color: white;
+    }
+
+    .btn-know.yes { background: #2E7D32; }
+    .btn-know.no  { background: #E53935; }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: #888;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🃏 플래시카드</h1>
+  <div class="sub" id="headerSub">챕터를 선택하세요</div>
+</div>
+
+<div class="container" id="quizPage">
+
+  <!-- 진행 정보 -->
+  <div class="info-bar">
+    <div>
+      <span class="type-badge" id="typeBadge"
+            style="background:#E65100;">플래시카드</span>
+      <span id="progressText"
+            style="margin-left:6px; font-size:0.85rem;"></span>
+    </div>
+    <div id="knowScore"
+         style="font-size:0.85rem; color:#555;">✅ 0 / ❌ 0</div>
+  </div>
+
+  <!-- 진행 바 -->
+  <div class="progress-label">
+    <span>진행</span>
+    <span id="progressPct">0%</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"
+         style="width:0%; background:#E65100;"></div>
+  </div>
+
+  <!-- 카드 번호 -->
+  <div class="card-counter" id="cardCounter"></div>
+
+  <!-- 플래시카드 -->
+  <div class="flashcard-wrap">
+    <div class="flashcard-inner" id="flashcardInner"
+         onclick="flipCard()">
+      <!-- 앞면 -->
+      <div class="card-face card-front">
+        <div class="term" id="cardFront">카드를 불러오는 중...</div>
+        <div class="flip-hint">👆 탭하여 뒤집기</div>
+      </div>
+      <!-- 뒷면 -->
+      <div class="card-face card-back">
+        <div class="meaning" id="cardBack"></div>
+        <div class="source" id="cardSource"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 알고있나요? -->
+  <div class="know-wrap" id="knowWrap" style="display:none;">
+    <button class="btn-know yes" onclick="markKnow(true)">
+      ✅ 알고 있어요
+    </button>
+    <button class="btn-know no"  onclick="markKnow(false)">
+      ❌ 모르겠어요
+    </button>
+  </div>
+
+  <!-- 이전/다음 -->
+  <div class="card-nav">
+    <button class="btn-prev" id="btnPrev"
+            onclick="prevCard()" disabled>◀ 이전</button>
+    <button class="btn-next-card" id="btnNextCard"
+            onclick="nextCard()">다음 ▶</button>
+  </div>
+
+  <!-- 하단 버튼 -->
+  <div class="bottom-btns">
+    <button class="btn-change" onclick="shuffleCards()">🔀 섞기</button>
+    <button class="btn-change" onclick="showModal()">챕터 변경</button>
+    <button class="btn-change" style="background:#546E7A;"
+            onclick="location.href='index.html'">🏠 홈</button>
+  </div>
+
+</div>
+
+<!-- 완료 화면 -->
+<div class="container" id="resultPage" style="display:none;">
+  <div class="card">
+    <div class="card-title">🎉 플래시카드 완료!</div>
+    <div id="resultContent"></div>
+  </div>
+  <div class="bottom-btns">
+    <button class="btn-next" onclick="retryAll()">🔄 전체 다시</button>
+    <button class="btn-next"
+            style="background:#E53935;"
+            onclick="retryWrong()">❌ 모르는 것만</button>
+    <button class="btn-change" onclick="showModal()">📚 챕터 변경</button>
+    <button class="btn-change" style="background:#546E7A;"
+            onclick="location.href='index.html'">🏠 홈</button>
+  </div>
+</div>
+
+<!-- 챕터 선택 모달 -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h2>📚 챕터 선택</h2>
+    <div id="modalChGrid"
+         style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+    <div style="margin-top:14px; border-top:1px solid #E0E0E0; padding-top:12px;">
+      <button onclick="startAllChapters()"
+              style="width:100%; padding:13px; background:#1A237E;
+                     color:white; border:none; border-radius:10px;
+                     font-size:0.9rem; font-weight:bold;
+                     font-family:inherit; cursor:pointer;">
+        🎲 전체 챕터 랜덤
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+let cards        = [];
+let idx          = 0;
+let knownCount   = 0;
+let unknownCount = 0;
+let unknownCards = [];
+let isFlipped    = false;
+let currentChKey = '';
+
+// ── 초기화 ──
+function init() {
+  const ch   = sessionStorage.getItem('sel_ch');
+  const type = sessionStorage.getItem('sel_type');
+  if (ch && type === 'card') {
+    startChapter(ch);
+  } else {
+    showModal();
+  }
+}
+
+// ── 모달 ──
+function buildModal() {
+  const grid = document.getElementById('modalChGrid');
+  grid.innerHTML = '';
+  const colors = [
+    '#E53935','#D81B60','#8E24AA','#3949AB',
+    '#1E88E5','#00ACC1','#00897B','#43A047',
+    '#7CB342','#F4511E','#8D6E63','#546E7A'
+  ];
+  CHAPTER_LIST.forEach((ch, i) => {
+    const data = getTypeData(ch.key, 'cards');
+    if (!data.length) return;
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      padding:12px 8px; border:none; border-radius:10px;
+      background:${colors[i]}; color:white;
+      font-size:0.82rem; font-weight:bold;
+      font-family:inherit; cursor:pointer; line-height:1.4;
+    `;
+    btn.innerHTML = `CH${i+1} ${ch.label.replace(/CH\d+\s*/,'')}<br>
+      <span style="font-size:0.7rem;opacity:0.85;">${data.length}장</span>`;
+    btn.onclick = () => { closeModal(); startChapter(ch.key); };
+    grid.appendChild(btn);
+  });
+}
+
+function showModal() {
+  buildModal();
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+// ── 챕터 시작 ──
+function startChapter(chKey) {
+  currentChKey = chKey;
+  const raw = getTypeData(chKey, 'cards');
+  if (!raw.length) { showToast('카드가 없습니다'); return; }
+
+  cards = shuffle(raw);
+  resetSession();
+
+  const ch = getChData(chKey);
+  document.getElementById('headerSub').textContent =
+    ch ? ch.title : chKey;
+
+  document.getElementById('quizPage').style.display   = 'block';
+  document.getElementById('resultPage').style.display = 'none';
+
+  loadCard();
+}
+
+// ── 전체 챕터 랜덤 ──
+function startAllChapters() {
+  closeModal();
+  currentChKey = 'ALL';
+  let all = [];
+  CHAPTER_LIST.forEach(ch => {
+    all = all.concat(
+      getTypeData(ch.key, 'cards').map(c => ({ ...c, _chKey: ch.key }))
+    );
+  });
+  if (!all.length) { showToast('카드가 없습니다'); return; }
+
+  cards = shuffle(all);
+  resetSession();
+
+  document.getElementById('headerSub').textContent = '전체 챕터 랜덤';
+  document.getElementById('quizPage').style.display   = 'block';
+  document.getElementById('resultPage').style.display = 'none';
+
+  loadCard();
+}
+
+// ── 세션 초기화 ──
+function resetSession() {
+  idx          = 0;
+  knownCount   = 0;
+  unknownCount = 0;
+  unknownCards = [];
+  isFlipped    = false;
+}
+
+// ── 카드 로드 ──
+function loadCard() {
+  isFlipped = false;
+
+  const card = cards[idx];
+  const t    = cards.length;
+
+  // 진행
+  document.getElementById('progressText').textContent =
+    `${idx+1} / ${t}`;
+  document.getElementById('progressBar').style.width =
+    `${((idx+1)/t)*100}%`;
+  document.getElementById('progressPct').textContent =
+    `${Math.round(((idx+1)/t)*100)}%`;
+  document.getElementById('cardCounter').textContent =
+    `카드 ${idx+1} / ${t}`;
+  document.getElementById('knowScore').textContent =
+    `✅ ${knownCount} / ❌ ${unknownCount}`;
+
+  // 앞면
+  document.getElementById('cardFront').textContent = card.front;
+
+  // 뒷면
+  document.getElementById('cardBack').textContent  = card.back;
+  document.getElementById('cardSource').textContent =
+    card.원문 ? `📌 원문: ${card.원문}` : '';
+
+  // 카드 초기화 (앞면으로)
+  document.getElementById('flashcardInner').classList.remove('flipped');
+  document.getElementById('knowWrap').style.display = 'none';
+
+  // 버튼
+  document.getElementById('btnPrev').disabled     = (idx === 0);
+  document.getElementById('btnNextCard').disabled = false;
+}
+
+// ── 카드 뒤집기 ──
+function flipCard() {
+  const inner = document.getElementById('flashcardInner');
+  isFlipped = !isFlipped;
+  if (isFlipped) {
+    inner.classList.add('flipped');
+    document.getElementById('knowWrap').style.display = 'flex';
+  } else {
+    inner.classList.remove('flipped');
+    document.getElementById('knowWrap').style.display = 'none';
+  }
+}
+
+// ── 알고있나요 체크 ──
+function markKnow(knows) {
+  const card = cards[idx];
+  if (knows) {
+    knownCount++;
+  } else {
+    unknownCount++;
+    unknownCards.push(card);
+  }
+  document.getElementById('knowScore').textContent =
+    `✅ ${knownCount} / ❌ ${unknownCount}`;
+  nextCard();
+}
+
+// ── 다음 카드 ──
+function nextCard() {
+  if (idx + 1 >= cards.length) {
+    showResult();
+  } else {
+    idx++;
+    loadCard();
+  }
+}
+
+// ── 이전 카드 ──
+function prevCard() {
+  if (idx > 0) {
+    idx--;
+    loadCard();
+  }
+}
+
+// ── 섞기 ──
+function shuffleCards() {
+  cards = shuffle(cards);
+  resetSession();
+  loadCard();
+  showToast('🔀 카드를 섞었습니다!');
+}
+
+// ── 결과 화면 ──
+function showResult() {
+  document.getElementById('quizPage').style.display   = 'none';
+  document.getElementById('resultPage').style.display = 'block';
+
+  const total   = knownCount + unknownCount;
+  const pct     = total > 0 ? Math.round(knownCount/total*100) : 0;
+  const ch      = getChData(currentChKey);
+  const chLabel = ch ? ch.title
+    : (currentChKey === 'ALL' ? '전체 챕터' : currentChKey);
+
+  let msg = '';
+  if (pct >= 90)      msg = '🏆 거의 다 외웠어요!';
+  else if (pct >= 70) msg = '👍 잘 하셨어요!';
+  else                msg = '📖 모르는 카드를 다시 봐요!';
+
+  let unknownHTML = '';
+  if (unknownCards.length > 0) {
+    unknownHTML = `
+      <div style="font-weight:bold;color:#B71C1C;margin:14px 0 8px;">
+        ❌ 모르는 카드 (${unknownCards.length}장)
+      </div>`;
+    unknownCards.forEach((c,i) => {
+      unknownHTML += `
+        <div class="wrong-item">
+          <div class="wi-q" style="font-size:1rem;color:#1A237E;">
+            ${c.front}
+          </div>
+          <div class="wi-exp" style="margin-top:6px;">${c.back}</div>
+          ${c.원문 ? `<div style="font-size:0.75rem;color:#888;margin-top:3px;">
+            📌 원문: ${c.원문}</div>` : ''}
+        </div>`;
+    });
+  }
+
+  document.getElementById('resultContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:0.9rem;color:#555;">${chLabel}</div>
+      <div style="font-size:2rem;font-weight:bold;color:#1A237E;margin:6px 0;">
+        ✅ ${knownCount}  /  ❌ ${unknownCount}
+      </div>
+      <div style="font-size:1rem;color:#555;">
+        암기율 ${pct}% (총 ${cards.length}장)
+      </div>
+      <div style="font-size:1.1rem;font-weight:bold;
+                  color:#E65100;margin-top:4px;">${msg}</div>
+    </div>
+    ${unknownHTML}
+  `;
+
+  window.scrollTo(0,0);
+}
+
+// ── 전체 다시 ──
+function retryAll() {
+  if (currentChKey === 'ALL') startAllChapters();
+  else startChapter(currentChKey);
+}
+
+// ── 모르는 것만 ──
+function retryWrong() {
+  if (!unknownCards.length) {
+    showToast('모르는 카드가 없습니다! 🎉');
+    return;
+  }
+  cards = shuffle([...unknownCards]);
+  resetSession();
+  document.getElementById('quizPage').style.display   = 'block';
+  document.getElementById('resultPage').style.display = 'none';
+  loadCard();
+}
+
+init();
+</script>
+
+</body>
+</html>
