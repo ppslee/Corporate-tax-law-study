@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>학습 진도 | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .dday-card {
+      background: linear-gradient(135deg, #1A237E, #283593);
+      color: white;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .dday-card .dday-num {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: #FFD54F;
+    }
+
+    .dday-card .dday-label {
+      font-size: 0.85rem;
+      color: #B3C5FF;
+      margin-top: 4px;
+    }
+
+    .dday-card .dday-date {
+      font-size: 0.8rem;
+      color: #90A4FF;
+      margin-top: 2px;
+    }
+
+    /* 전체 진도 */
+    .total-progress-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .total-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-item {
+      background: #F8F9FF;
+      border-radius: 10px;
+      padding: 12px 8px;
+      text-align: center;
+      border: 1px solid #E8EAF6;
+    }
+
+    .stat-item .sv {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #1A237E;
+    }
+
+    .stat-item .sl {
+      font-size: 0.72rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* 챕터별 진도 */
+    .ch-progress-item {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+
+    .ch-progress-item:hover {
+      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    }
+
+    .ch-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .ch-progress-name {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .ch-progress-pct {
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .ch-type-bars {
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #F0F0F0;
+    }
+
+    .ch-type-bars.show { display: block; }
+
+    .type-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .type-bar-label {
+      width: 80px;
+      font-size: 0.75rem;
+      color: #666;
+      flex-shrink: 0;
+    }
+
+    .type-bar-wrap {
+      flex: 1;
+      background: #F0F0F0;
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .type-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.4s;
+    }
+
+    .type-bar-val {
+      width: 36px;
+      font-size: 0.72rem;
+      color: #888;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* 복습 스케줄 */
+    .review-item {
+      background: white;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border-left: 4px solid #1A237E;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .review-item .ri-ch {
+      font-weight: bold;
+      font-size: 0.88rem;
+      color: #1A237E;
+    }
+
+    .review-item .ri-date {
+      font-size: 0.78rem;
+      color: #888;
+    }
+
+    .review-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .badge-today   { background: #E53935; }
+    .badge-soon    { background: #F57F17; }
+    .badge-later   { background: #2E7D32; }
+    .badge-done    { background: #9E9E9E; }
+
+    /* 오답 분석 */
+    .wrong-analysis-item {
+      background: #FFF8E1;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border-left: 4px solid #FBC02D;
+    }
+
+    .wa-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .wa-ch {
+      font-weight: bold;
+      font-size: 0.88rem;
+      color: #1A237E;
+    }
+
+    .wa-count {
+      font-size: 0.82rem;
+      color: #E53935;
+      font-weight: bold;
+    }
+
+    .wa-types {
+      font-size: 0.75rem;
+      color: #777;
+    }
+
+    /* 섹션 탭 */
+    .section-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
+    }
+
+    .section-tab {
+      padding: 8px 16px;
+      border: 1.5px solid #C5CAE9;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      background: white;
+      color: #1A237E;
+      font-family: inherit;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .section-tab.active {
+      background: #1A237E;
+      color: white;
+      border-color: #1A237E;
+    }
+
+    /* 데이터 관리 */
+    .data-btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .data-btn.export  { background: #2E7D32; }
+    .data-btn.import  { background: #1565C0; }
+    .data-btn.reset   { background: #E53935; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📈 학습 진도</h1>
+  <div class="sub">법인세법 완전정복 현황</div>
+</div>
+
+<div class="container">
+
+  <!-- D-Day -->
+  <div class="dday-card">
+    <div class="dday-num" id="ddayNum">D-???</div>
+    <div class="dday-label">1차 시험까지</div>
+    <div class="dday-date">2027년 4월 24일 (토)</div>
+  </div>
+
+  <!-- 전체 통계 -->
+  <div class="total-progress-card">
+    <div class="card-title">📊 전체 학습 현황</div>
+    <div class="total-stats">
+      <div class="stat-item">
+        <div class="sv" id="statTotal">0</div>
+        <div class="sl">총 풀이 수</div>
+      </div>
+      <div class="stat-item">
+        <div class="sv" id="statCorrect">0</div>
+        <div class="sl">총 정답 수</div>
+      </div>
+      <div class="stat-item">
+        <div class="sv" id="statPct">0%</div>
+        <div class="sl">전체 정답률</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;
+                font-size:0.82rem;color:#555;margin-bottom:4px;">
+      <span>전체 달성도</span>
+      <span id="totalPctLabel">0%</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="totalBar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- 섹션 탭 -->
+  <div class="section-tabs">
+    <button class="section-tab active" id="stab_chapter"
+            onclick="setSection('chapter')">📚 챕터별 진도</button>
+    <button class="section-tab" id="stab_review"
+            onclick="setSection('review')">🔁 복습 스케줄</button>
+    <button class="section-tab" id="stab_wrong"
+            onclick="setSection('wrong')">❌ 오답 분석</button>
+    <button class="section-tab" id="stab_data"
+            onclick="setSection('data')">💾 데이터 관리</button>
+  </div>
+
+  <!-- 챕터별 진도 -->
+  <div id="sec_chapter">
+    <div id="chapterProgressList"></div>
+  </div>
+
+  <!-- 복습 스케줄 -->
+  <div id="sec_review" style="display:none;">
+    <div class="card">
+      <div class="card-title">🔁 복습 스케줄</div>
+      <div style="font-size:0.8rem;color:#888;margin-bottom:10px;">
+        마지막 학습일 기준 권장 복습 시점
+      </div>
+      <div id="reviewSchedule"></div>
+    </div>
+  </div>
+
+  <!-- 오답 분석 -->
+  <div id="sec_wrong" style="display:none;">
+    <div class="card">
+      <div class="card-title">❌ 오답 분석</div>
+      <div style="font-size:0.8rem;color:#888;margin-bottom:10px;">
+        챕터별·유형별 오답 현황
+      </div>
+      <div id="wrongAnalysis"></div>
+    </div>
+    <div class="card" style="margin-top:8px;">
+      <div class="card-title">📋 최근 오답 목록</div>
+      <div id="recentWrong"></div>
+    </div>
+  </div>
+
+  <!-- 데이터 관리 -->
+  <div id="sec_data" style="display:none;">
+    <div class="card">
+      <div class="card-title">💾 데이터 관리</div>
+      <div style="font-size:0.82rem;color:#555;margin-bottom:12px;line-height:1.6;">
+        📥 <b>내보내기</b>: 모든 학습 기록을 JSON 파일로 저장<br>
+        📤 <b>불러오기</b>: 저장된 JSON 파일로 데이터 복원<br>
+        💡 <b>권장</b>: 주 1회 내보내기 후 GitHub에 업로드
+      </div>
+      <button class="data-btn export" onclick="exportData()">
+        📥 데이터 내보내기
+      </button>
+      <button class="data-btn import" onclick="triggerImport()">
+        📤 데이터 불러오기
+      </button>
+      <input type="file" id="importFile" accept=".json"
+             style="display:none;"
+             onchange="importDataFile(this.files[0])">
+
+      <!-- 저장 현황 -->
+      <div style="margin-top:14px; padding:12px;
+                  background:#F8F9FF; border-radius:10px;">
+        <div style="font-weight:bold;font-size:0.88rem;
+                    color:#1A237E;margin-bottom:8px;">
+          📊 저장된 데이터 현황
+        </div>
+        <div id="dataSummary"
+             style="font-size:0.82rem;color:#555;line-height:1.8;"></div>
+      </div>
+    </div>
+
+    <!-- 초기화 -->
+    <div class="card" style="border:2px solid #FFCDD2;">
+      <div class="card-title" style="color:#E53935;">⚠️ 초기화</div>
+      <div style="font-size:0.82rem;color:#888;margin-bottom:10px;">
+        모든 학습 기록이 삭제됩니다. 삭제 전 반드시 내보내기를 하세요!
+      </div>
+      <button class="data-btn reset" onclick="resetAllData()">
+        🗑️ 전체 데이터 초기화
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 하단 네비 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='choice.html'">
+    <span class="icon">📝</span>4지선다
+  </button>
+  <button class="nav-btn" onclick="location.href='blank.html'">
+    <span class="icon">✏️</span>빈칸
+  </button>
+  <button class="nav-btn active" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+let currentSection = 'chapter';
+
+const TYPE_LABELS = {
+  ox:      '⭕ OX 퀴즈',
+  choice:  '📝 4지선다',
+  blank:   '✏️ 빈칸',
+  card:    '🃏 카드',
+  compare: '📊 비교',
+  number:  '🔢 숫자',
+  flow:    '🔄 흐름도',
+  white:   '📄 백지',
+};
+
+const TYPE_COLORS = {
+  ox:'#1565C0', choice:'#8E24AA', blank:'#2E7D32',
+  card:'#E65100', compare:'#C62828', number:'#00838F',
+  flow:'#37474F', white:'#4527A0',
+};
+
+const CH_COLORS = [
+  '#E53935','#D81B60','#8E24AA','#3949AB',
+  '#1E88E5','#00ACC1','#00897B','#43A047',
+  '#7CB342','#F4511E','#8D6E63','#546E7A'
+];
+
+// ── 초기화 ──
+function init() {
+  document.getElementById('ddayNum').textContent = getDDay();
+  renderTotalStats();
+  renderChapterProgress();
+  renderDataSummary();
+}
+
+// ── 섹션 전환 ──
+function setSection(sec) {
+  currentSection = sec;
+  ['chapter','review','wrong','data'].forEach(s => {
+    document.getElementById(`stab_${s}`).className =
+      `section-tab ${s === sec ? 'active' : ''}`;
+    document.getElementById(`sec_${s}`).style.display =
+      s === sec ? 'block' : 'none';
+  });
+
+  if (sec === 'review') renderReviewSchedule();
+  if (sec === 'wrong')  renderWrongAnalysis();
+  if (sec === 'data')   renderDataSummary();
+}
+
+// ── 전체 통계 ──
+function renderTotalStats() {
+  const p = getProgress();
+  let c=0, t=0;
+  Object.values(p).forEach(ch => {
+    Object.values(ch).forEach(v => { c+=v.correct; t+=v.total; });
+  });
+  const pct = t > 0 ? Math.round(c/t*100) : 0;
+
+  document.getElementById('statTotal').textContent   = t.toLocaleString();
+  document.getElementById('statCorrect').textContent = c.toLocaleString();
+  document.getElementById('statPct').textContent     = `${pct}%`;
+  document.getElementById('totalPctLabel').textContent = `${pct}%`;
+  document.getElementById('totalBar').style.width    = `${pct}%`;
+}
+
+// ── 챕터별 진도 ──
+function renderChapterProgress() {
+  const p    = getProgress();
+  const list = document.getElementById('chapterProgressList');
+  list.innerHTML = '';
+
+  CHAPTER_LIST.forEach((ch, i) => {
+    const chP   = p[ch.key] || {};
+    const color = CH_COLORS[i];
+    let c=0, t=0;
+    Object.values(chP).forEach(v => { c+=v.correct; t+=v.total; });
+    const pct = t > 0 ? Math.round(c/t*100) : 0;
+
+    const item = document.createElement('div');
+    item.className = 'ch-progress-item';
+    item.style.borderLeft = `4px solid ${color}`;
+
+    // 유형별 바
+    let typeBarsHTML = '';
+    Object.entries(TYPE_LABELS).forEach(([typeKey, typeLabel]) => {
+      const tv = chP[typeKey];
+      if (!tv || tv.total === 0) return;
+      const tpct = Math.round(tv.correct/tv.total*100);
+      const tcolor = TYPE_COLORS[typeKey] || '#1A237E';
+      typeBarsHTML += `
+        <div class="type-bar-row">
+          <div class="type-bar-label">${typeLabel}</div>
+          <div class="type-bar-wrap">
+            <div class="type-bar-fill"
+                 style="width:${tpct}%;background:${tcolor};"></div>
+          </div>
+          <div class="type-bar-val">${tpct}%</div>
+        </div>
+      `;
+    });
+
+    item.innerHTML = `
+      <div class="ch-progress-header">
+        <span class="ch-progress-name"
+              style="color:${color};">${ch.label}</span>
+        <span class="ch-progress-pct"
+              style="color:${pct>=70?'#2E7D32':pct>=40?'#F57F17':'#E53935'};">
+          ${pct}%
+        </span>
+      </div>
+      <div class="progress-wrap" style="height:8px;">
+        <div class="progress-bar"
+             style="width:${pct}%;background:${color};height:8px;"></div>
+      </div>
+      <div style="font-size:0.75rem;color:#888;margin-top:4px;">
+        정답 ${c} / 풀이 ${t}
+      </div>
+      <div class="ch-type-bars" id="typebars_${ch.key}">
+        ${typeBarsHTML || '<div style="color:#aaa;font-size:0.78rem;">아직 학습 기록 없음</div>'}
+      </div>
+    `;
+
+    item.onclick = () => {
+      const bars = document.getElementById(`typebars_${ch.key}`);
+      bars.classList.toggle('show');
+    };
+
+    list.appendChild(item);
+  });
+}
+
+// ── 복습 스케줄 ──
+function renderReviewSchedule() {
+  const p        = getProgress();
+  const today    = getTodayStr();
+  const schedule = document.getElementById('reviewSchedule');
+  schedule.innerHTML = '';
+
+  // 간격반복: 1일, 3일, 7일, 14일 후
+  const intervals = [1, 3, 7, 14];
+
+  let items = [];
+  CHAPTER_LIST.forEach((ch, i) => {
+    const chP = p[ch.key] || {};
+    let lastDate = '';
+    Object.values(chP).forEach(v => {
+      if (v.lastDate && v.lastDate > lastDate) lastDate = v.lastDate;
+    });
+    if (!lastDate) return;
+
+    const last   = new Date(lastDate);
+    const todayD = new Date(today);
+    const diff   = Math.floor((todayD - last) / (1000*60*60*24));
+
+    // 다음 복습 시점 결정
+    let nextInterval = intervals.find(iv => diff < iv) || 14;
+    const daysLeft   = nextInterval - diff;
+
+    let badge = '', badgeClass = '';
+    if (daysLeft <= 0) {
+      badge = '지금 복습!'; badgeClass = 'badge-today';
+    } else if (daysLeft === 1) {
+      badge = '내일'; badgeClass = 'badge-soon';
+    } else if (daysLeft <= 3) {
+      badge = `${daysLeft}일 후`; badgeClass = 'badge-soon';
+    } else {
+      badge = `${daysLeft}일 후`; badgeClass = 'badge-later';
+    }
+
+    items.push({ ch, i, lastDate, daysLeft, badge, badgeClass });
+  });
+
+  // 복습 급한 순 정렬
+  items.sort((a,b) => a.daysLeft - b.daysLeft);
+
+  if (!items.length) {
+    schedule.innerHTML =
+      '<div style="text-align:center;color:#aaa;padding:14px;">아직 학습 기록이 없습니다</div>';
+    return;
+  }
+
+  items.forEach(item => {
+    const color = CH_COLORS[item.i];
+    const div   = document.createElement('div');
+    div.className = 'review-item';
+    div.style.borderLeftColor = color;
+    div.innerHTML = `
+      <div>
+        <div class="ri-ch" style="color:${color};">${item.ch.label}</div>
+        <div class="ri-date">마지막 학습: ${item.lastDate}</div>
+      </div>
+      <span class="review-badge ${item.badgeClass}">${item.badge}</span>
+    `;
+    div.onclick = () => {
+      sessionStorage.setItem('sel_ch',   item.ch.key);
+      sessionStorage.setItem('sel_type', 'ox');
+      location.href = 'ox.html';
+    };
+    schedule.appendChild(div);
+  });
+}
+
+// ── 오답 분석 ──
+function renderWrongAnalysis() {
+  const wrongs  = getWrongNotes();
+  const analysis= document.getElementById('wrongAnalysis');
+  const recent  = document.getElementById('recentWrong');
+
+  // 챕터별 오답 수 집계
+  const chMap = {};
+  wrongs.forEach(w => {
+    if (!chMap[w.chKey]) chMap[w.chKey] = { total:0, types:{} };
+    chMap[w.chKey].total++;
+    chMap[w.chKey].types[w.type] =
+      (chMap[w.chKey].types[w.type] || 0) + 1;
+  });
+
+  analysis.innerHTML = '';
+  if (!Object.keys(chMap).length) {
+    analysis.innerHTML =
+      '<div style="text-align:center;color:#aaa;padding:12px;">오답 기록이 없습니다</div>';
+  } else {
+    const sorted = Object.entries(chMap).sort((a,b) => b[1].total - a[1].total);
+    sorted.forEach(([chKey, data]) => {
+      const ch    = CHAPTER_LIST.find(c => c.key === chKey);
+      const chIdx = CHAPTER_LIST.findIndex(c => c.key === chKey);
+      const color = CH_COLORS[chIdx] || '#1A237E';
+      const typeStr = Object.entries(data.types)
+        .map(([t,n]) => `${TYPE_LABELS[t]||t}: ${n}개`)
+        .join(' · ');
+
+      const div = document.createElement('div');
+      div.className = 'wrong-analysis-item';
+      div.style.borderLeftColor = color;
+      div.innerHTML = `
+        <div class="wa-header">
+          <span class="wa-ch" style="color:${color};">
+            ${ch?.label || chKey}
+          </span>
+          <span class="wa-count">오답 ${data.total}개</span>
+        </div>
+        <div class="wa-types">${typeStr}</div>
+      `;
+      analysis.appendChild(div);
+    });
+  }
+
+  // 최근 오답 20개
+  const recentList = wrongs.slice(-20).reverse();
+  recent.innerHTML = '';
+  if (!recentList.length) {
+    recent.innerHTML =
+      '<div style="text-align:center;color:#aaa;padding:12px;">오답 기록이 없습니다</div>';
+  } else {
+    recentList.forEach(w => {
+      const ch    = CHAPTER_LIST.find(c => c.key === w.chKey);
+      const chIdx = CHAPTER_LIST.findIndex(c => c.key === w.chKey);
+      const color = CH_COLORS[chIdx] || '#1A237E';
+      const div   = document.createElement('div');
+      div.className = 'wrong-item';
+      div.innerHTML = `
+        <div class="wi-q">
+          <span style="font-size:0.72rem;color:${color};font-weight:bold;">
+            ${ch?.label || w.chKey} · ${TYPE_LABELS[w.type]||w.type}
+          </span><br>
+          ${w.q}
+        </div>
+        <div class="wi-ans">
+          <span class="ans-my">내 답: ${w.myAns}</span>
+          <span class="ans-correct">정답: ${w.correctAns}</span>
+        </div>
+        <div class="wi-exp">📖 ${w.해설}</div>
+        ${w.원문 ? `<div style="font-size:0.75rem;color:#888;margin-top:3px;">
+          📌 원문: ${w.원문}</div>` : ''}
+        <div style="font-size:0.72rem;color:#aaa;margin-top:3px;">
+          📅 ${w.date}
+        </div>
+      `;
+      recent.appendChild(div);
+    });
+  }
+}
+
+// ── 데이터 현황 ──
+function renderDataSummary() {
+  const p       = getProgress();
+  const wrongs  = getWrongNotes();
+  let c=0, t=0;
+  Object.values(p).forEach(ch => {
+    Object.values(ch).forEach(v => { c+=v.correct; t+=v.total; });
+  });
+
+  document.getElementById('dataSummary').innerHTML = `
+    📝 총 풀이 수: <b>${t.toLocaleString()}회</b><br>
+    ✅ 총 정답 수: <b>${c.toLocaleString()}개</b><br>
+    ❌ 오답 기록: <b>${wrongs.length}개</b><br>
+    📊 전체 정답률: <b>${t>0?Math.round(c/t*100):0}%</b>
+  `;
+}
+
+// ── 데이터 내보내기 ──
+function exportData() {
+  const data = {
+    progress:   getProgress(),
+    wrongNotes: getWrongNotes(),
+    white:      JSON.parse(localStorage.getItem('tls_white') || '[]'),
+    exportedAt: new Date().toISOString(),
+    version:    '1.0'
+  };
+  const blob = new Blob(
+    [JSON.stringify(data, null, 2)],
+    { type: 'application/json' }
+  );
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href     = url;
+  a.download = `tax_study_backup_${getTodayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 데이터를 내보냈습니다!');
+}
+
+function triggerImport() {
+  document.getElementById('importFile').click();
+}
+
+function importDataFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.progress)   saveProgress(data.progress);
+      if (data.wrongNotes) saveWrongNotes(data.wrongNotes);
+      if (data.white)
+        localStorage.setItem('tls_white', JSON.stringify(data.white));
+      showToast('📤 데이터를 불러왔습니다!');
+      setTimeout(() => location.reload(), 1000);
+    } catch (err) {
+      showToast('❌ 파일 형식이 올바르지 않습니다');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── 전체 초기화 ──
+function resetAllData() {
+  if (!confirm('⚠️ 모든 학습 기록을 삭제하시겠어요?\n삭제 전 데이터를 내보내기 하세요!'))
+    return;
+  if (!confirm('⚠️ 마지막 확인! 이 작업은 되돌릴 수 없습니다.'))
+    return;
+  localStorage.removeItem('tls_progress');
+  localStorage.removeItem('tls_wrong');
+  localStorage.removeItem('tls_white');
+  showToast('🗑️ 모든 데이터가 삭제되었습니다');
+  setTimeout(() => location.reload(), 1000);
+}
+
+init();
+</script>
+
+</body>
+</html>
