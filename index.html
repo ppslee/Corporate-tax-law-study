@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>법인세법 완전정복</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>⚖️ 법인세법 완전정복</h1>
+  <div class="sub">2026 세법강의 필기노트 원문 기반</div>
+</div>
+
+<div class="container">
+
+  <!-- D-Day -->
+  <div class="dday-badge">
+    <div class="dday-num" id="ddayNum">D-???</div>
+    <div class="dday-label">1차 시험 | 2027년 4월 24일 (토)</div>
+  </div>
+
+  <!-- 전체 진도 -->
+  <div class="card">
+    <div class="card-title">📊 전체 학습 진도</div>
+    <div id="totalProgressWrap">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:#555;margin-bottom:4px;">
+        <span>전체 정답률</span>
+        <span id="totalPctLabel">0%</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="totalProgressBar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 챕터 선택 -->
+  <div class="card">
+    <div class="card-title">📚 챕터 선택</div>
+    <div class="chapter-grid" id="chapterGrid"></div>
+  </div>
+
+  <!-- 학습 유형 선택 -->
+  <div class="card" id="typeCard" style="display:none;">
+    <div class="card-title" id="typeCardTitle">📝 학습 유형 선택</div>
+    <div class="type-grid" id="typeGrid"></div>
+  </div>
+
+  <!-- 오늘의 오답 복습 -->
+  <div class="card" id="todayWrongCard">
+    <div class="card-title">🔁 오답 복습 (최근 20개)</div>
+    <div id="todayWrongList"></div>
+  </div>
+
+</div>
+
+<!-- 하단 네비게이션 -->
+<div class="bottom-nav">
+  <button class="nav-btn active" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='choice.html'">
+    <span class="icon">📝</span>4지선다
+  </button>
+  <button class="nav-btn" onclick="location.href='blank.html'">
+    <span class="icon">✏️</span>빈칸
+  </button>
+  <button class="nav-btn" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+</div>
+
+<!-- 챕터별 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+function init() {
+  // D-Day
+  document.getElementById('ddayNum').textContent = getDDay();
+
+  // 전체 진도
+  renderTotalProgress();
+
+  // 챕터 그리드
+  renderChapterGrid();
+
+  // 오답 복습
+  renderRecentWrong();
+}
+
+// ── 전체 진도 ──
+function renderTotalProgress() {
+  const p = getProgress();
+  let c=0, t=0;
+  Object.values(p).forEach(ch => {
+    Object.values(ch).forEach(v => { c+=v.correct; t+=v.total; });
+  });
+  const pct = t > 0 ? Math.round(c/t*100) : 0;
+  document.getElementById('totalPctLabel').textContent = `${pct}%`;
+  document.getElementById('totalProgressBar').style.width = `${pct}%`;
+}
+
+// ── 챕터 그리드 ──
+function renderChapterGrid() {
+  const grid = document.getElementById('chapterGrid');
+  grid.innerHTML = '';
+  CHAPTER_LIST.forEach((ch, i) => {
+    const pct = getChapterPct(ch.key);
+    const colors = [
+      '#E53935','#D81B60','#8E24AA','#3949AB',
+      '#1E88E5','#00ACC1','#00897B','#43A047',
+      '#7CB342','#F4511E','#8D6E63','#546E7A'
+    ];
+    const color = colors[i] || '#1A237E';
+    const card = document.createElement('div');
+    card.className = 'chapter-card';
+    card.style.borderLeftColor = color;
+    card.innerHTML = `
+      <div class="ch-num">CH${String(i+1).padStart(2,'0')}</div>
+      <div class="ch-name" style="color:${color};">${ch.label.replace(/CH\d+\s*/,'')}</div>
+      <div style="font-size:0.75rem;color:#888;margin-bottom:6px;">${pct}% 달성</div>
+      <div class="ch-progress">
+        <div class="ch-bar" style="width:${pct}%;background:${color};"></div>
+      </div>
+    `;
+    card.onclick = () => selectChapter(ch.key, ch.label, color);
+    grid.appendChild(card);
+  });
+}
+
+// ── 챕터 선택 ──
+function selectChapter(chKey, chLabel, color) {
+  window.SELECTED_CH = chKey;
+
+  const typeCard = document.getElementById('typeCard');
+  typeCard.style.display = 'block';
+  document.getElementById('typeCardTitle').textContent =
+    `📝 ${chLabel} — 학습 유형 선택`;
+
+  // 스크롤
+  typeCard.scrollIntoView({ behavior:'smooth', block:'start' });
+
+  renderTypeGrid(chKey, color);
+}
+
+// ── 유형 그리드 ──
+function renderTypeGrid(chKey, color) {
+  const grid = document.getElementById('typeGrid');
+  grid.innerHTML = '';
+  const ch = getChData(chKey);
+
+  TYPE_LIST.forEach(type => {
+    const data = ch ? (ch[type.key] || []) : [];
+    const cnt  = data.length;
+    if (cnt === 0) return; // 데이터 없는 유형 숨기기
+
+    const btn = document.createElement('button');
+    btn.className = 'type-btn';
+    btn.style.background = type.color;
+    btn.innerHTML = `${type.icon}<br>${type.label}<br><span style="font-size:0.72rem;opacity:0.85;">${cnt}문항</span>`;
+    btn.onclick = () => goToType(chKey, type.key);
+    grid.appendChild(btn);
+  });
+}
+
+// ── 유형 페이지 이동 ──
+function goToType(chKey, typeKey) {
+  const pageMap = {
+    ox:      'ox.html',
+    choice:  'choice.html',
+    blank:   'blank.html',
+    card:    'card.html',
+    compare: 'compare.html',
+    number:  'number.html',
+    flow:    'flow.html',
+    white:   'white.html',
+  };
+  const page = pageMap[typeKey];
+  if (!page) return;
+  // 선택 정보 세션 저장
+  sessionStorage.setItem('sel_ch',   chKey);
+  sessionStorage.setItem('sel_type', typeKey);
+  location.href = page;
+}
+
+// ── 오답 복습 ──
+function renderRecentWrong() {
+  const wrongs = getWrongNotes().slice(-20).reverse();
+  const container = document.getElementById('todayWrongList');
+
+  if (!wrongs.length) {
+    container.innerHTML =
+      '<div style="text-align:center;color:#aaa;padding:12px;">오답 기록이 없습니다</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  wrongs.forEach((w,i) => {
+    const item = document.createElement('div');
+    item.className = 'wrong-item';
+    const chLabel = CHAPTER_LIST.find(c => c.key === w.chKey)?.label || w.chKey;
+    item.innerHTML = `
+      <div class="wi-q">
+        <span style="font-size:0.72rem;color:#1A237E;font-weight:bold;">${chLabel}</span><br>
+        Q. ${w.q}
+      </div>
+      <div class="wi-ans">
+        <span class="ans-my">내 답: ${w.myAns}</span>
+        <span class="ans-correct">정답: ${w.correctAns}</span>
+      </div>
+      <div class="wi-exp">📖 ${w.해설}</div>
+      ${w.원문 ? `<div style="font-size:0.75rem;color:#888;margin-top:3px;">📌 원문: ${w.원문}</div>` : ''}
+      <div style="font-size:0.72rem;color:#aaa;margin-top:3px;">📅 ${w.date}</div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
