@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>계산흐름도 | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── 흐름도 ── */
+    .flow-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 14px;
+    }
+
+    .flow-item {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    .flow-step-num {
+      width: 32px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #1A237E;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .step-line {
+      width: 2px;
+      flex: 1;
+      background: #C5CAE9;
+      margin: 0 auto;
+    }
+
+    .flow-content {
+      flex: 1;
+      margin-left: 10px;
+      padding-bottom: 16px;
+    }
+
+    .flow-box {
+      background: white;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      border-left: 3px solid #1A237E;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .flow-box:hover { background: #F8F9FF; }
+
+    .flow-box.result-box {
+      border-left-color: #E53935;
+      background: #FFF8F8;
+    }
+
+    .flow-box .fl-label {
+      font-size: 0.78rem;
+      color: #1A237E;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .flow-box .fl-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #212121;
+    }
+
+    .flow-box .fl-desc {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 4px;
+      line-height: 1.5;
+      display: none;
+      white-space: pre-line;
+    }
+
+    .flow-box.expanded .fl-desc { display: block; }
+
+    .flow-box .fl-expand {
+      font-size: 0.72rem;
+      color: #1A237E;
+      margin-top: 4px;
+    }
+
+    /* ── 퀴즈 모드 ── */
+    .flow-quiz-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #37474F;
+    }
+
+    .flow-quiz-q {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .flow-opts {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .flow-opt {
+      padding: 11px 14px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 8px;
+      background: #F9F9F9;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: all 0.15s;
+      white-space: pre-line;
+    }
+
+    .flow-opt:hover:not(:disabled) {
+      background: #ECEFF1;
+      border-color: #37474F;
+    }
+
+    .flow-opt.correct {
+      background: #C8E6C9;
+      border-color: #2E7D32;
+      color: #1B5E20;
+      font-weight: bold;
+    }
+
+    .flow-opt.wrong {
+      background: #FFCDD2;
+      border-color: #B71C1C;
+      color: #B71C1C;
+    }
+
+    .flow-opt:disabled { cursor: default; }
+
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 10px;
+      border: 1.5px solid #1A237E;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      background: white;
+      color: #1A237E;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .mode-tab.active {
+      background: #1A237E;
+      color: white;
+    }
+
+    .complete-box {
+      background: #E8EAF6;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .complete-box .co-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #1A237E;
+      margin-bottom: 4px;
+    }
+
+    .complete-box .co-desc {
+      font-size: 0.82rem;
+      color: #555;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔄 계산흐름도</h1>
+  <div class="sub">법인세 과세표준 및 세액 계산 흐름</div>
+</div>
+
+<div class="container">
+
+  <!-- 모드 탭 -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabView"
+            onclick="setMode('view')">📋 흐름도 보기</button>
+    <button class="mode-tab" id="tabQuiz"
+            onclick="setMode('quiz')">🎯 순서 퀴즈</button>
+    <button class="mode-tab" id="tabFill"
+            onclick="setMode('fill')">✏️ 빈칸 퀴즈</button>
+  </div>
+
+  <!-- 흐름도 보기 모드 -->
+  <div id="viewMode">
+    <div class="complete-box">
+      <div class="co-title">📊 법인세 계산 흐름</div>
+      <div class="co-desc">
+        각 단계를 탭하면 상세 설명을 확인할 수 있습니다
+      </div>
+    </div>
+    <div class="flow-container" id="flowContainer"></div>
+  </div>
+
+  <!-- 순서 퀴즈 모드 -->
+  <div id="quizMode" style="display:none;">
+    <div class="complete-box">
+      <div class="co-title">🎯 순서 퀴즈</div>
+      <div class="co-desc">
+        빈칸에 들어갈 올바른 계산 단계를 선택하세요
+      </div>
+    </div>
+    <div class="quiz-info" style="display:flex;justify-content:space-between;font-size:0.85rem;color:#555;margin-bottom:10px;">
+      <span id="quizProgress">0 / 0</span>
+      <span id="quizScore">점수: 0 / 0</span>
+    </div>
+    <div class="progress-wrap" style="margin-bottom:12px;">
+      <div class="progress-bar" id="quizProgressBar"
+           style="width:0%; background:#37474F;"></div>
+    </div>
+    <div id="quizContent"></div>
+    <div class="bottom-btns" style="margin-top:4px;">
+      <button class="btn-next" id="btnQuizNext"
+              onclick="nextQuiz()" disabled>다음 ▶</button>
+      <button class="btn-change" onclick="startQuiz()">🔄 다시 풀기</button>
+    </div>
+  </div>
+
+  <!-- 빈칸 퀴즈 모드 -->
+  <div id="fillMode" style="display:none;">
+    <div class="complete-box">
+      <div class="co-title">✏️ 빈칸 채우기 퀴즈</div>
+      <div class="co-desc">
+        계산 흐름의 빈칸을 직접 입력하세요
+      </div>
+    </div>
+    <div class="quiz-info" style="display:flex;justify-content:space-between;font-size:0.85rem;color:#555;margin-bottom:10px;">
+      <span id="fillProgress">0 / 0</span>
+      <span id="fillScore">점수: 0 / 0</span>
+    </div>
+    <div class="progress-wrap" style="margin-bottom:12px;">
+      <div class="progress-bar" id="fillProgressBar"
+           style="width:0%; background:#4527A0;"></div>
+    </div>
+    <div id="fillContent"></div>
+    <div class="bottom-btns" style="margin-top:4px;">
+      <button class="btn-next" id="btnFillNext"
+              onclick="nextFill()" disabled>다음 ▶</button>
+      <button class="btn-change" onclick="startFill()">🔄 다시 풀기</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 하단 네비 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='choice.html'">
+    <span class="icon">📝</span>4지선다
+  </button>
+  <button class="nav-btn active" onclick="location.href='flow.html'">
+    <span class="icon">🔄</span>흐름
+  </button>
+  <button class="nav-btn" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch09.js"></script>
+<script src="app.js"></script>
+<script>
+
+// ── 계산흐름 데이터 (CH09 flow 사용) ──
+function getFlowData() {
+  return (window.CH09 && window.CH09.flow) ? window.CH09.flow : [];
+}
+
+let currentMode  = 'view';
+let quizItems    = [];
+let quizIdx      = 0;
+let quizCorrect  = 0;
+let quizTotal    = 0;
+let quizAnswered = false;
+let fillItems    = [];
+let fillIdx      = 0;
+let fillCorrect  = 0;
+let fillTotal    = 0;
+let fillAnswered = false;
+
+// ── 초기화 ──
+function init() {
+  renderFlowView();
+}
+
+// ── 모드 전환 ──
+function setMode(mode) {
+  currentMode = mode;
+  ['view','quiz','fill'].forEach(m => {
+    document.getElementById(`tab${m.charAt(0).toUpperCase()+m.slice(1)}`).className =
+      `mode-tab ${m === mode ? 'active' : ''}`;
+    document.getElementById(`${m}Mode`).style.display =
+      m === mode ? 'block' : 'none';
+  });
+
+  if (mode === 'quiz') startQuiz();
+  if (mode === 'fill') startFill();
+}
+
+// ── 흐름도 렌더링 ──
+function renderFlowView() {
+  const flows = getFlowData();
+  const container = document.getElementById('flowContainer');
+  container.innerHTML = '';
+
+  flows.forEach((f, i) => {
+    const isLast = (i === flows.length - 1);
+    const isResult = f.label.startsWith('=');
+
+    const item = document.createElement('div');
+    item.className = 'flow-item';
+    item.innerHTML = `
+      <div class="flow-step-num">
+        <div class="step-circle"
+             style="${isResult ? 'background:#E53935;' : ''}">${f.step}</div>
+        ${!isLast ? '<div class="step-line"></div>' : ''}
+      </div>
+      <div class="flow-content">
+        <div class="flow-box ${isResult ? 'result-box' : ''}"
+             id="fbox_${i}" onclick="toggleFlow(${i})">
+          <div class="fl-label">STEP ${f.step}</div>
+          <div class="fl-title">${f.label}</div>
+          <div class="fl-desc">${f.desc}</div>
+          <div class="fl-expand">▼ 상세 보기</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function toggleFlow(i) {
+  const box = document.getElementById(`fbox_${i}`);
+  const desc = box.querySelector('.fl-desc');
+  const hint = box.querySelector('.fl-expand');
+  box.classList.toggle('expanded');
+  hint.textContent = box.classList.contains('expanded')
+    ? '▲ 접기' : '▼ 상세 보기';
+}
+
+// ── 순서 퀴즈 ──
+function startQuiz() {
+  const flows = getFlowData();
+  if (!flows.length) return;
+
+  // 각 단계에 대해 "다음 단계는?" 문제 생성
+  quizItems = [];
+  for (let i = 0; i < flows.length - 1; i++) {
+    const current = flows[i];
+    const correct = flows[i+1];
+    // 오답 3개
+    const wrongs = shuffle(
+      flows.filter((_, j) => j !== i+1).map(f => f.label)
+    ).slice(0, 3);
+    const opts = shuffle([correct.label, ...wrongs]);
+    quizItems.push({
+      q: `다음 단계 이후에 오는 계산 단계는?\n\n"STEP ${current.step}: ${current.label}"`,
+      opts,
+      answer: correct.label,
+      해설: `STEP ${current.step}: ${current.label}\n→ STEP ${correct.step}: ${correct.label}\n\n${correct.desc}`,
+    });
+  }
+
+  // 빈칸 문제도 추가
+  flows.forEach((f, i) => {
+    const wrongs = shuffle(
+      flows.filter((_, j) => j !== i).map(fl => fl.label)
+    ).slice(0, 3);
+    const opts = shuffle([f.label, ...wrongs]);
+    quizItems.push({
+      q: `STEP ${f.step}에 해당하는 계산 내용은?\n\n설명: "${f.desc}"`,
+      opts,
+      answer: f.label,
+      해설: `STEP ${f.step}: ${f.label}\n${f.desc}`,
+    });
+  });
+
+  quizItems   = shuffle(quizItems);
+  quizIdx     = 0;
+  quizCorrect = 0;
+  quizTotal   = 0;
+  quizAnswered = false;
+
+  loadQuizItem();
+}
+
+function loadQuizItem() {
+  quizAnswered = false;
+  const q = quizItems[quizIdx];
+  const t = quizItems.length;
+
+  document.getElementById('quizProgress').textContent = `${quizIdx+1} / ${t}`;
+  document.getElementById('quizScore').textContent    = `점수: ${quizCorrect} / ${quizTotal}`;
+  document.getElementById('quizProgressBar').style.width = `${((quizIdx+1)/t)*100}%`;
+  document.getElementById('btnQuizNext').disabled = true;
+
+  const nums = ['①','②','③','④'];
+  let optsHTML = q.opts.map((opt, i) => `
+    <button class="flow-opt" id="fopt_${i}"
+            onclick="answerQuiz(${i})">${nums[i]} ${opt}</button>
+  `).join('');
+
+  document.getElementById('quizContent').innerHTML = `
+    <div class="flow-quiz-card">
+      <div class="flow-quiz-q">${q.q}</div>
+      <div class="flow-opts">${optsHTML}</div>
+      <div id="flowResult" style="font-size:0.88rem;font-weight:bold;
+           padding:6px 0;min-height:24px;"></div>
+      <div class="explain-box" id="flowExplain">📖 ${q.해설}</div>
+    </div>
+  `;
+}
+
+function answerQuiz(optIdx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const q         = quizItems[quizIdx];
+  const selected  = q.opts[optIdx];
+  const isCorrect = (selected === q.answer);
+
+  quizTotal++;
+  if (isCorrect) quizCorrect++;
+
+  const resultEl = document.getElementById('flowResult');
+  if (isCorrect) {
+    resultEl.textContent = '✅ 정답입니다!';
+    resultEl.style.color = '#1B5E20';
+    document.getElementById(`fopt_${optIdx}`).className = 'flow-opt correct';
+  } else {
+    resultEl.textContent = `❌ 오답! 정답은 [${q.answer}]`;
+    resultEl.style.color = '#B71C1C';
+    document.getElementById(`fopt_${optIdx}`).className = 'flow-opt wrong';
+    for (let i = 0; i < q.opts.length; i++) {
+      if (q.opts[i] === q.answer)
+        document.getElementById(`fopt_${i}`).className = 'flow-opt correct';
+    }
+  }
+
+  document.getElementById('flowExplain').classList.add('show');
+  for (let i = 0; i < q.opts.length; i++) {
+    const btn = document.getElementById(`fopt_${i}`);
+    if (btn) btn.disabled = true;
+  }
+
+  document.getElementById('quizScore').textContent =
+    `점수: ${quizCorrect} / ${quizTotal}`;
+  document.getElementById('btnQuizNext').disabled = false;
+}
+
+function nextQuiz() {
+  quizIdx++;
+  if (quizIdx >= quizItems.length) {
+    showQuizResult();
+  } else {
+    loadQuizItem();
+  }
+}
+
+function showQuizResult() {
+  const pct = quizTotal > 0 ? Math.round(quizCorrect/quizTotal*100) : 0;
+  let msg = pct >= 90 ? '🏆 흐름도 완전 암기!' : pct >= 70 ? '👍 잘 하셨어요!' : '📖 흐름도를 다시 봐요!';
+  document.getElementById('quizContent').innerHTML = `
+    <div style="text-align:center;padding:20px 0;">
+      <div style="font-size:2rem;font-weight:bold;color:#1A237E;margin:8px 0;">
+        ${quizCorrect} / ${quizTotal}
+      </div>
+      <div style="font-size:1rem;color:#555;">정답률 ${pct}%</div>
+      <div style="font-size:1.1rem;font-weight:bold;color:#E65100;margin-top:6px;">${msg}</div>
+    </div>
+  `;
+  document.getElementById('btnQuizNext').disabled = true;
+}
+
+// ── 빈칸 퀴즈 ──
+function startFill() {
+  const flows = getFlowData();
+  if (!flows.length) return;
+
+  fillItems = shuffle(flows.map(f => ({
+    step:   f.step,
+    label:  f.label,
+    desc:   f.desc,
+    answer: f.label,
+  })));
+
+  fillIdx     = 0;
+  fillCorrect = 0;
+  fillTotal   = 0;
+  fillAnswered = false;
+
+  loadFillItem();
+}
+
+function loadFillItem() {
+  fillAnswered = false;
+  const f = fillItems[fillIdx];
+  const t = fillItems.length;
+
+  document.getElementById('fillProgress').textContent = `${fillIdx+1} / ${t}`;
+  document.getElementById('fillScore').textContent    = `점수: ${fillCorrect} / ${fillTotal}`;
+  document.getElementById('fillProgressBar').style.width = `${((fillIdx+1)/t)*100}%`;
+  document.getElementById('btnFillNext').disabled = true;
+
+  document.getElementById('fillContent').innerHTML = `
+    <div class="flow-quiz-card" style="border-left-color:#4527A0;">
+      <div class="flow-quiz-q">
+        STEP ${f.step}의 계산 내용은 무엇인가요?<br>
+        <span style="font-size:0.8rem;color:#777;">${f.desc}</span>
+      </div>
+      <input type="text" class="blank-input" id="fillInput"
+             placeholder="계산 단계를 입력하세요"
+             onkeydown="if(event.key==='Enter') checkFill()">
+      <button class="btn-save" onclick="checkFill()"
+              style="background:#4527A0; margin-top:8px;">
+        ✅ 확인
+      </button>
+      <div id="fillResult" style="font-size:0.88rem;font-weight:bold;
+           padding:6px 0;min-height:24px;"></div>
+      <div class="explain-box" id="fillExplain">
+        📖 정답: ${f.label}<br>설명: ${f.desc}
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const input = document.getElementById('fillInput');
+    if (input) input.focus();
+  }, 100);
+}
+
+function checkFill() {
+  if (fillAnswered) return;
+  fillAnswered = true;
+
+  const f        = fillItems[fillIdx];
+  const input    = document.getElementById('fillInput');
+  const userVal  = input ? input.value.trim() : '';
+  const normalize = s => s.replace(/\s/g,'').toLowerCase();
+  const isCorrect = normalize(userVal) === normalize(f.answer);
+
+  fillTotal++;
+  if (isCorrect) fillCorrect++;
+
+  const resultEl = document.getElementById('fillResult');
+  if (isCorrect) {
+    resultEl.textContent = '✅ 정답입니다!';
+    resultEl.style.color = '#1B5E20';
+    if (input) input.className = 'blank-input correct';
+  } else {
+    resultEl.textContent = `❌ 오답! 정답: ${f.answer}`;
+    resultEl.style.color = '#B71C1C';
+    if (input) {
+      input.className = 'blank-input wrong';
+      input.value = `${userVal}  →  정답: ${f.answer}`;
+    }
+  }
+
+  document.getElementById('fillExplain').classList.add('show');
+  if (input) input.disabled = true;
+
+  const checkBtn = document.querySelector('#fillContent .btn-save');
+  if (checkBtn) checkBtn.disabled = true;
+
+  document.getElementById('fillScore').textContent =
+    `점수: ${fillCorrect} / ${fillTotal}`;
+  document.getElementById('btnFillNext').disabled = false;
+}
+
+function nextFill() {
+  fillIdx++;
+  if (fillIdx >= fillItems.length) {
+    const pct = fillTotal > 0 ? Math.round(fillCorrect/fillTotal*100) : 0;
+    let msg = pct >= 90 ? '🏆 완벽해요!' : pct >= 70 ? '👍 잘 하셨어요!' : '📖 다시 연습해요!';
+    document.getElementById('fillContent').innerHTML = `
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:2rem;font-weight:bold;color:#1A237E;margin:8px 0;">
+          ${fillCorrect} / ${fillTotal}
+        </div>
+        <div style="font-size:1rem;color:#555;">정답률 ${pct}%</div>
+        <div style="font-size:1.1rem;font-weight:bold;color:#E65100;margin-top:6px;">${msg}</div>
+      </div>
+    `;
+    document.getElementById('btnFillNext').disabled = true;
+  } else {
+    loadFillItem();
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
