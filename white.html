@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>백지 테스트 | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .white-header-card {
+      background: linear-gradient(135deg, #4527A0, #512DA8);
+      color: white;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .white-header-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .white-header-card p {
+      font-size: 0.82rem;
+      opacity: 0.85;
+      line-height: 1.6;
+    }
+
+    .timer-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 0;
+    }
+
+    .timer-display {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #4527A0;
+      font-variant-numeric: tabular-nums;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .timer-display.warning { color: #E53935; }
+
+    .timer-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      color: white;
+    }
+
+    .timer-btn.start  { background: #2E7D32; }
+    .timer-btn.stop   { background: #E53935; }
+    .timer-btn.reset  { background: #546E7A; }
+
+    .white-area-wrap {
+      position: relative;
+      margin: 10px 0;
+    }
+
+    .white-area {
+      width: 100%;
+      min-height: 320px;
+      padding: 16px;
+      border: 2px solid #C5CAE9;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      background: #FAFBFF;
+      line-height: 1.9;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    .white-area:focus {
+      outline: none;
+      border-color: #4527A0;
+      background: white;
+    }
+
+    .word-count {
+      text-align: right;
+      font-size: 0.75rem;
+      color: #AAA;
+      margin-top: 4px;
+    }
+
+    /* 참고 답안 */
+    .answer-section {
+      display: none;
+      margin-top: 14px;
+    }
+
+    .answer-section.show { display: block; }
+
+    .answer-card {
+      background: #F3E5F5;
+      border-radius: 12px;
+      padding: 14px 16px;
+      border-left: 4px solid #7B1FA2;
+      margin-bottom: 10px;
+    }
+
+    .answer-card .ans-title {
+      font-size: 0.88rem;
+      font-weight: bold;
+      color: #4527A0;
+      margin-bottom: 8px;
+    }
+
+    .answer-card .ans-content {
+      font-size: 0.82rem;
+      color: #333;
+      line-height: 1.8;
+      white-space: pre-line;
+    }
+
+    /* 챕터 선택 */
+    .ch-select-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .ch-select-btn {
+      padding: 14px 8px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1.4;
+      transition: opacity 0.2s;
+      text-align: center;
+    }
+
+    .ch-select-btn:hover { opacity: 0.85; }
+    .ch-select-btn.selected {
+      outline: 3px solid #212121;
+      outline-offset: 2px;
+    }
+
+    /* 셀프 채점 */
+    .score-wrap {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .score-btn {
+      padding: 12px 8px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      color: white;
+      transition: opacity 0.2s;
+    }
+
+    .score-btn.s1 { background: #E53935; }
+    .score-btn.s2 { background: #F57F17; }
+    .score-btn.s3 { background: #2E7D32; }
+    .score-btn:hover { opacity: 0.85; }
+
+    /* 기록 */
+    .record-item {
+      background: white;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border-left: 4px solid #4527A0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .record-ch {
+      font-weight: bold;
+      font-size: 0.88rem;
+      color: #4527A0;
+    }
+
+    .record-date {
+      font-size: 0.75rem;
+      color: #AAA;
+    }
+
+    .record-score-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: white;
+      margin-top: 4px;
+    }
+
+    .score-s1 { background: #E53935; }
+    .score-s2 { background: #F57F17; }
+    .score-s3 { background: #2E7D32; }
+
+    .tab-wrap {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1.5px solid #4527A0;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      background: white;
+      color: #4527A0;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      background: #4527A0;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📄 백지 테스트</h1>
+  <div class="sub">아무것도 보지 않고 기억나는 것을 적어보세요</div>
+</div>
+
+<div class="container">
+
+  <!-- 탭 -->
+  <div class="tab-wrap">
+    <button class="tab-btn active" id="tabTest"
+            onclick="setTab('test')">📝 테스트</button>
+    <button class="tab-btn" id="tabRecord"
+            onclick="setTab('record')">📋 기록</button>
+  </div>
+
+  <!-- 테스트 탭 -->
+  <div id="testTab">
+
+    <!-- 헤더 -->
+    <div class="white-header-card">
+      <h2>📄 백지 테스트</h2>
+      <p>챕터를 선택하고 타이머를 시작하세요<br>
+         교재를 보지 않고 기억나는 내용을 모두 적어보세요</p>
+    </div>
+
+    <!-- 챕터 선택 -->
+    <div class="card">
+      <div class="card-title">📚 챕터 선택</div>
+      <div class="ch-select-grid" id="chSelectGrid"></div>
+    </div>
+
+    <!-- 타이머 -->
+    <div class="card">
+      <div class="card-title">⏱️ 타이머</div>
+      <div class="timer-wrap">
+        <div class="timer-display" id="timerDisplay">10:00</div>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <select id="timerSelect"
+                style="flex:1; padding:9px; border:1.5px solid #C5CAE9;
+                       border-radius:8px; font-family:inherit; font-size:0.88rem;">
+          <option value="300">5분</option>
+          <option value="600" selected>10분</option>
+          <option value="900">15분</option>
+          <option value="1200">20분</option>
+          <option value="1800">30분</option>
+          <option value="0">제한 없음</option>
+        </select>
+        <button class="timer-btn start" id="btnTimerStart"
+                onclick="startTimer()">▶ 시작</button>
+        <button class="timer-btn stop"  id="btnTimerStop"
+                onclick="stopTimer()" style="display:none;">⏸ 정지</button>
+        <button class="timer-btn reset" onclick="resetTimer()">↺ 초기화</button>
+      </div>
+    </div>
+
+    <!-- 입력 영역 -->
+    <div class="card">
+      <div class="card-title" id="writeTitle">
+        ✏️ 기억나는 내용을 모두 적어보세요
+      </div>
+      <div class="white-area-wrap">
+        <textarea class="white-area" id="whiteArea"
+                  placeholder="여기에 기억나는 내용을 자유롭게 적어보세요...
+
+예)
+- 업무용승용차 = 비영업용 소형승용차
+- 경차(1,000cc이하) 제외
+- 감가상각 5년 정액법 강제
+- 연간 800만원 한도
+- 운행기록부 미작성 → 15,000,000원 한도
+..."
+                  oninput="updateWordCount()"></textarea>
+      </div>
+      <div class="word-count" id="wordCount">0자</div>
+    </div>
+
+    <!-- 완료 버튼 -->
+    <div class="bottom-btns">
+      <button class="btn-next" onclick="showAnswer()"
+              style="background:#4527A0;">📖 참고 답안 보기</button>
+      <button class="btn-change" onclick="clearAll()">🗑️ 초기화</button>
+      <button class="btn-change" style="background:#546E7A;"
+              onclick="location.href='index.html'">🏠 홈</button>
+    </div>
+
+    <!-- 참고 답안 -->
+    <div class="answer-section" id="answerSection">
+      <div class="card">
+        <div class="card-title">📖 참고 답안</div>
+        <div id="answerContent"></div>
+      </div>
+
+      <!-- 셀프 채점 -->
+      <div class="card">
+        <div class="card-title">⭐ 셀프 채점</div>
+        <div style="font-size:0.85rem; color:#555; margin-bottom:10px;">
+          참고 답안과 비교하여 자신의 암기 수준을 평가하세요
+        </div>
+        <div class="score-wrap">
+          <button class="score-btn s1" onclick="saveRecord(1)">
+            😓 많이 부족<br>
+            <span style="font-size:0.72rem;">30% 미만</span>
+          </button>
+          <button class="score-btn s2" onclick="saveRecord(2)">
+            🤔 조금 부족<br>
+            <span style="font-size:0.72rem;">30~70%</span>
+          </button>
+          <button class="score-btn s3" onclick="saveRecord(3)">
+            😊 잘 됐어요<br>
+            <span style="font-size:0.72rem;">70% 이상</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 기록 탭 -->
+  <div id="recordTab" style="display:none;">
+    <div class="card">
+      <div class="card-title">📋 백지 테스트 기록</div>
+      <div id="recordList"></div>
+    </div>
+    <div class="bottom-btns">
+      <button class="btn-danger" onclick="clearRecords()"
+              style="background:#E53935; color:white; border:none;
+                     border-radius:10px; padding:12px 20px;
+                     font-size:0.9rem; font-weight:bold;
+                     font-family:inherit; cursor:pointer;">
+        🗑️ 기록 전체 삭제
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 하단 네비 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='blank.html'">
+    <span class="icon">✏️</span>빈칸
+  </button>
+  <button class="nav-btn active" onclick="location.href='white.html'">
+    <span class="icon">📄</span>백지
+  </button>
+  <button class="nav-btn" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+let selectedCh    = null;
+let timerInterval = null;
+let timerSeconds  = 600;
+let timerRunning  = false;
+let timerElapsed  = 0;
+
+// ── 초기화 ──
+function init() {
+  buildChSelect();
+  renderRecords();
+}
+
+// ── 탭 전환 ──
+function setTab(tab) {
+  document.getElementById('tabTest').className =
+    `tab-btn ${tab === 'test' ? 'active' : ''}`;
+  document.getElementById('tabRecord').className =
+    `tab-btn ${tab === 'record' ? 'active' : ''}`;
+  document.getElementById('testTab').style.display =
+    tab === 'test' ? 'block' : 'none';
+  document.getElementById('recordTab').style.display =
+    tab === 'record' ? 'block' : 'none';
+
+  if (tab === 'record') renderRecords();
+}
+
+// ── 챕터 선택 ──
+function buildChSelect() {
+  const grid = document.getElementById('chSelectGrid');
+  grid.innerHTML = '';
+  const colors = [
+    '#E53935','#D81B60','#8E24AA','#3949AB',
+    '#1E88E5','#00ACC1','#00897B','#43A047',
+    '#7CB342','#F4511E','#8D6E63','#546E7A'
+  ];
+
+  // 전체 버튼
+  const allBtn = document.createElement('button');
+  allBtn.className = 'ch-select-btn';
+  allBtn.style.background = '#1A237E';
+  allBtn.id = 'chbtn_ALL';
+  allBtn.innerHTML = '🎲 전체 챕터<br><span style="font-size:0.72rem;opacity:0.85;">CH01~CH12</span>';
+  allBtn.onclick = () => selectCh('ALL', allBtn);
+  grid.appendChild(allBtn);
+
+  CHAPTER_LIST.forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ch-select-btn';
+    btn.style.background = colors[i];
+    btn.id = `chbtn_${ch.key}`;
+    btn.innerHTML = `CH${i+1}<br>
+      <span style="font-size:0.72rem;opacity:0.85;">
+        ${ch.label.replace(/CH\d+\s*/,'')}
+      </span>`;
+    btn.onclick = () => selectCh(ch.key, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function selectCh(chKey, btnEl) {
+  selectedCh = chKey;
+  document.querySelectorAll('.ch-select-btn')
+    .forEach(b => b.classList.remove('selected'));
+  btnEl.classList.add('selected');
+
+  const ch      = CHAPTER_LIST.find(c => c.key === chKey);
+  const chLabel = chKey === 'ALL' ? '전체 챕터'
+    : (ch ? ch.label : chKey);
+  document.getElementById('writeTitle').textContent =
+    `✏️ [${chLabel}] 기억나는 내용을 모두 적어보세요`;
+
+  showToast(`✅ ${chLabel} 선택됨`);
+}
+
+// ── 타이머 ──
+function startTimer() {
+  if (timerRunning) return;
+  const sel = document.getElementById('timerSelect').value;
+  if (!timerRunning) {
+    timerSeconds = parseInt(sel) || 600;
+    if (sel === '0') timerSeconds = 0; // 무제한
+  }
+  timerRunning = true;
+  timerElapsed = 0;
+
+  document.getElementById('btnTimerStart').style.display = 'none';
+  document.getElementById('btnTimerStop').style.display  = 'inline-block';
+
+  timerInterval = setInterval(() => {
+    if (timerSeconds === 0) {
+      // 무제한
+      timerElapsed++;
+      document.getElementById('timerDisplay').textContent =
+        formatTime(timerElapsed);
+      return;
+    }
+    timerSeconds--;
+    timerElapsed++;
+    const display = document.getElementById('timerDisplay');
+    display.textContent = formatTime(timerSeconds);
+    display.className   = timerSeconds <= 60
+      ? 'timer-display warning' : 'timer-display';
+
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      showToast('⏰ 시간이 종료되었습니다!');
+      document.getElementById('btnTimerStart').style.display = 'inline-block';
+      document.getElementById('btnTimerStop').style.display  = 'none';
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  document.getElementById('btnTimerStart').style.display = 'inline-block';
+  document.getElementById('btnTimerStop').style.display  = 'none';
+}
+
+function resetTimer() {
+  stopTimer();
+  const sel = document.getElementById('timerSelect').value;
+  timerSeconds = parseInt(sel) || 600;
+  timerElapsed = 0;
+  const display = document.getElementById('timerDisplay');
+  display.textContent = sel === '0' ? '00:00' : formatTime(timerSeconds);
+  display.className = 'timer-display';
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ── 글자수 ──
+function updateWordCount() {
+  const len = document.getElementById('whiteArea').value.length;
+  document.getElementById('wordCount').textContent = `${len}자`;
+}
+
+// ── 참고 답안 보기 ──
+function showAnswer() {
+  if (!selectedCh) {
+    showToast('⚠️ 챕터를 먼저 선택하세요!');
+    return;
+  }
+  stopTimer();
+
+  const section = document.getElementById('answerSection');
+  section.classList.add('show');
+
+  // 참고 답안 생성
+  const ansContent = document.getElementById('answerContent');
+  let html = '';
+
+  const buildAnswer = (chKey) => {
+    const ch = getChData(chKey);
+    if (!ch) return '';
+
+    let ans = `<div class="answer-card">
+      <div class="ans-title">📚 ${ch.title}</div>
+      <div class="ans-content">`;
+
+    // 플래시카드 기반
+    const cards = ch.cards || [];
+    if (cards.length) {
+      ans += cards.map(c => `• ${c.front}\n  → ${c.back}`).join('\n\n');
+    }
+
+    // 숫자 항목
+    const numbers = ch.numbers || [];
+    if (numbers.length) {
+      ans += '\n\n[핵심 숫자]\n';
+      ans += numbers.map(n => `• ${n.val} → ${n.label}`).join('\n');
+    }
+
+    ans += `</div></div>`;
+    return ans;
+  };
+
+  if (selectedCh === 'ALL') {
+    CHAPTER_LIST.forEach(ch => { html += buildAnswer(ch.key); });
+  } else {
+    html = buildAnswer(selectedCh);
+  }
+
+  ansContent.innerHTML = html || '<div style="color:#aaa;text-align:center;padding:12px;">참고 답안이 없습니다</div>';
+
+  section.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── 셀프 채점 저장 ──
+function saveRecord(score) {
+  if (!selectedCh) {
+    showToast('⚠️ 챕터를 먼저 선택하세요!');
+    return;
+  }
+
+  const records = getWhiteRecords();
+  const ch      = CHAPTER_LIST.find(c => c.key === selectedCh);
+  records.push({
+    id:       Date.now(),
+    chKey:    selectedCh,
+    chLabel:  selectedCh === 'ALL' ? '전체 챕터' : (ch?.label || selectedCh),
+    score,
+    content:  document.getElementById('whiteArea').value.slice(0, 200),
+    elapsed:  timerElapsed,
+    date:     getTodayStr(),
+  });
+  // 최대 100개
+  if (records.length > 100) records.splice(0, records.length - 100);
+  localStorage.setItem('tls_white', JSON.stringify(records));
+
+  const msgs = {1:'😓 기록 저장!', 2:'🤔 기록 저장!', 3:'😊 기록 저장!'};
+  showToast(msgs[score] || '저장 완료!');
+}
+
+function getWhiteRecords() {
+  const r = localStorage.getItem('tls_white');
+  return r ? JSON.parse(r) : [];
+}
+
+// ── 기록 렌더링 ──
+function renderRecords() {
+  const records  = getWhiteRecords().slice().reverse();
+  const list     = document.getElementById('recordList');
+
+  if (!records.length) {
+    list.innerHTML = '<div style="text-align:center;color:#aaa;padding:16px;">기록이 없습니다</div>';
+    return;
+  }
+
+  const scoreLabels = {
+    1: '😓 많이 부족',
+    2: '🤔 조금 부족',
+    3: '😊 잘 됐어요'
+  };
+
+  list.innerHTML = '';
+  records.forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'record-item';
+    item.innerHTML = `
+      <div class="record-header">
+        <span class="record-ch">${r.chLabel}</span>
+        <span class="record-date">📅 ${r.date}</span>
+      </div>
+      <span class="record-score-badge score-s${r.score}">
+        ${scoreLabels[r.score] || '-'}
+      </span>
+      <div style="font-size:0.75rem;color:#888;margin-top:4px;">
+        ⏱️ ${formatTime(r.elapsed || 0)} 소요
+      </div>
+      ${r.content ? `<div style="font-size:0.78rem;color:#777;
+        margin-top:4px;border-top:1px solid #F0F0F0;padding-top:4px;">
+        ${r.content}${r.content.length >= 200 ? '...' : ''}
+      </div>` : ''}
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ── 초기화 ──
+function clearAll() {
+  if (!confirm('입력한 내용을 모두 지우시겠어요?')) return;
+  document.getElementById('whiteArea').value = '';
+  document.getElementById('wordCount').textContent = '0자';
+  document.getElementById('answerSection').classList.remove('show');
+  resetTimer();
+}
+
+function clearRecords() {
+  if (!confirm('모든 기록을 삭제하시겠어요?')) return;
+  localStorage.removeItem('tls_white');
+  renderRecords();
+  showToast('🗑️ 기록이 삭제되었습니다');
+}
+
+init();
+</script>
+
+</body>
+</html>
