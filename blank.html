@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>빈칸 채우기 | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>✏️ 빈칸 채우기</h1>
+  <div class="sub" id="headerSub">챕터를 선택하세요</div>
+</div>
+
+<div class="container" id="quizPage">
+
+  <!-- 진행 정보 -->
+  <div class="info-bar">
+    <div>
+      <span class="type-badge" id="typeBadge"
+            style="background:#2E7D32;">빈칸 채우기</span>
+      <span id="progressText"
+            style="margin-left:6px; font-size:0.85rem;"></span>
+    </div>
+    <div id="scoreText"
+         style="font-size:0.85rem; color:#555;">점수: 0 / 0</div>
+  </div>
+
+  <!-- 진행 바 -->
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"
+         style="width:0%; background:#2E7D32;"></div>
+  </div>
+
+  <!-- 문제 박스 -->
+  <div class="question-box" id="questionBox">
+    <span class="q-label" id="qLabel"></span>
+    <span id="qText">챕터와 문제를 불러오는 중...</span>
+  </div>
+
+  <!-- 빈칸 입력 영역 -->
+  <div id="blankWrap" style="display:flex; flex-direction:column; gap:10px; margin:10px 0;"></div>
+
+  <!-- 확인 버튼 -->
+  <button class="btn-save" id="btnCheck"
+          onclick="checkAnswer()"
+          style="background:#2E7D32; margin-bottom:8px;">
+    ✅ 정답 확인
+  </button>
+
+  <!-- 정오 표시 -->
+  <div class="result-text" id="resultText"></div>
+
+  <!-- 해설 -->
+  <div class="explain-box" id="explainBox"></div>
+
+  <!-- 원문 -->
+  <div class="source-box" id="sourceBox"></div>
+
+  <!-- 하단 버튼 -->
+  <div class="bottom-btns">
+    <button class="btn-next" id="btnNext"
+            onclick="nextQuestion()" disabled>다음 ▶</button>
+    <button class="btn-show-source"
+            id="btnSource" onclick="toggleSource()"
+            style="display:none;">📌 원문 보기</button>
+    <button class="btn-change" onclick="showModal()">챕터 변경</button>
+    <button class="btn-change" style="background:#546E7A;"
+            onclick="location.href='index.html'">🏠 홈</button>
+  </div>
+
+</div>
+
+<!-- 결과 화면 -->
+<div class="container" id="resultPage" style="display:none;">
+  <div class="card">
+    <div class="card-title">🎉 빈칸 채우기 완료!</div>
+    <div id="resultContent"></div>
+  </div>
+  <div class="bottom-btns">
+    <button class="btn-next" onclick="retrySession()">🔄 다시 풀기</button>
+    <button class="btn-change" onclick="showModal()">📚 챕터 변경</button>
+    <button class="btn-change" style="background:#546E7A;"
+            onclick="location.href='index.html'">🏠 홈</button>
+  </div>
+</div>
+
+<!-- 챕터 선택 모달 -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h2>📚 챕터 선택</h2>
+    <div id="modalChGrid"
+         style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
+    <div style="margin-top:14px; border-top:1px solid #E0E0E0; padding-top:12px;">
+      <button onclick="startAllChapters()"
+              style="width:100%; padding:13px; background:#1A237E;
+                     color:white; border:none; border-radius:10px;
+                     font-size:0.9rem; font-weight:bold;
+                     font-family:inherit; cursor:pointer;">
+        🎲 전체 챕터 랜덤
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+let questions    = [];
+let idx          = 0;
+let correct      = 0;
+let total        = 0;
+let wrongs       = [];
+let answered     = false;
+let currentChKey = '';
+let sourceVisible = false;
+
+// ── 초기화 ──
+function init() {
+  const ch   = sessionStorage.getItem('sel_ch');
+  const type = sessionStorage.getItem('sel_type');
+  if (ch && type === 'blank') {
+    startChapter(ch);
+  } else {
+    showModal();
+  }
+}
+
+// ── 모달 ──
+function buildModal() {
+  const grid = document.getElementById('modalChGrid');
+  grid.innerHTML = '';
+  const colors = [
+    '#E53935','#D81B60','#8E24AA','#3949AB',
+    '#1E88E5','#00ACC1','#00897B','#43A047',
+    '#7CB342','#F4511E','#8D6E63','#546E7A'
+  ];
+  CHAPTER_LIST.forEach((ch, i) => {
+    const data = getTypeData(ch.key, 'blank');
+    if (!data.length) return;
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      padding:12px 8px; border:none; border-radius:10px;
+      background:${colors[i]}; color:white;
+      font-size:0.82rem; font-weight:bold;
+      font-family:inherit; cursor:pointer; line-height:1.4;
+    `;
+    btn.innerHTML = `CH${i+1} ${ch.label.replace(/CH\d+\s*/,'')}<br>
+      <span style="font-size:0.7rem;opacity:0.85;">${data.length}문항</span>`;
+    btn.onclick = () => { closeModal(); startChapter(ch.key); };
+    grid.appendChild(btn);
+  });
+}
+
+function showModal() {
+  buildModal();
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+// ── 챕터 시작 ──
+function startChapter(chKey) {
+  currentChKey = chKey;
+  const raw = getTypeData(chKey, 'blank');
+  if (!raw.length) { showToast('빈칸 문제가 없습니다'); return; }
+
+  questions = shuffle(raw);
+  idx = 0; correct = 0; total = 0; wrongs = [];
+
+  const ch = getChData(chKey);
+  document.getElementById('headerSub').textContent =
+    ch ? ch.title : chKey;
+
+  document.getElementById('quizPage').style.display   = 'block';
+  document.getElementById('resultPage').style.display = 'none';
+
+  loadQuestion();
+}
+
+// ── 전체 챕터 랜덤 ──
+function startAllChapters() {
+  closeModal();
+  currentChKey = 'ALL';
+  let all = [];
+  CHAPTER_LIST.forEach(ch => {
+    all = all.concat(
+      getTypeData(ch.key, 'blank').map(q => ({ ...q, _chKey: ch.key }))
+    );
+  });
+  if (!all.length) { showToast('문제가 없습니다'); return; }
+
+  questions = shuffle(all);
+  idx = 0; correct = 0; total = 0; wrongs = [];
+
+  document.getElementById('headerSub').textContent = '전체 챕터 랜덤';
+  document.getElementById('quizPage').style.display   = 'block';
+  document.getElementById('resultPage').style.display = 'none';
+
+  loadQuestion();
+}
+
+// ── 문제 로드 ──
+function loadQuestion() {
+  answered      = false;
+  sourceVisible = false;
+
+  const q = questions[idx];
+  const t = questions.length;
+
+  // 진행
+  document.getElementById('progressText').textContent = `${idx+1} / ${t}`;
+  document.getElementById('scoreText').textContent    = `점수: ${correct} / ${total}`;
+  document.getElementById('progressBar').style.width  = `${(idx/t)*100}%`;
+
+  // 챕터 라벨
+  const chKey   = q._chKey || currentChKey;
+  const chLabel = CHAPTER_LIST.find(c => c.key === chKey)?.label || chKey;
+  document.getElementById('qLabel').textContent = chLabel;
+
+  // 문제 텍스트 (빈칸을 ___로 표시)
+  let displayQ = q.q;
+  q.answers.forEach(() => {
+    // 이미 (   ) 형태로 되어 있으면 그대로
+  });
+  document.getElementById('qText').textContent = displayQ;
+
+  // 빈칸 입력 생성
+  const wrap = document.getElementById('blankWrap');
+  wrap.innerHTML = '';
+  q.answers.forEach((ans, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex; align-items:center; gap:8px;';
+    div.innerHTML = `
+      <span style="font-size:0.85rem; color:#1A237E;
+                   font-weight:bold; width:24px; flex-shrink:0;">
+        ${i+1})
+      </span>
+      <input type="text" class="blank-input"
+             id="blank_${i}"
+             placeholder="정답을 입력하세요"
+             style="flex:1;"
+             onkeydown="if(event.key==='Enter') checkAnswer()">
+    `;
+    wrap.appendChild(div);
+  });
+
+  // 초기화
+  document.getElementById('resultText').textContent = '';
+  document.getElementById('resultText').className   = 'result-text';
+  document.getElementById('explainBox').classList.remove('show');
+  document.getElementById('sourceBox').classList.remove('show');
+  document.getElementById('btnCheck').disabled       = false;
+  document.getElementById('btnNext').disabled        = true;
+  document.getElementById('btnSource').style.display = 'none';
+
+  // 첫 번째 입력창 포커스
+  setTimeout(() => {
+    const first = document.getElementById('blank_0');
+    if (first) first.focus();
+  }, 100);
+}
+
+// ── 정답 확인 ──
+function checkAnswer() {
+  if (answered) return;
+  answered = true;
+
+  const q     = questions[idx];
+  const chKey = q._chKey || currentChKey;
+
+  let allCorrect = true;
+  let myAnswers  = [];
+
+  q.answers.forEach((ans, i) => {
+    const input    = document.getElementById(`blank_${i}`);
+    const userVal  = input ? input.value.trim() : '';
+    myAnswers.push(userVal);
+
+    // 정답 비교 (공백·특수문자 무시, 대소문자 무시)
+    const normalize = str => str.replace(/\s/g,'').toLowerCase();
+    const isOk = normalize(userVal) === normalize(ans);
+
+    if (input) {
+      input.className = `blank-input ${isOk ? 'correct' : 'wrong'}`;
+      input.disabled  = true;
+      // 오답이면 정답 표시
+      if (!isOk) {
+        input.value = `${userVal}  →  정답: ${ans}`;
+        allCorrect  = false;
+      }
+    }
+  });
+
+  total++;
+  if (allCorrect) {
+    correct++;
+    document.getElementById('resultText').textContent = '✅  정답입니다!';
+    document.getElementById('resultText').className   = 'result-text correct';
+  } else {
+    document.getElementById('resultText').textContent = `❌  오답!  정답: ${q.answers.join(' / ')}`;
+    document.getElementById('resultText').className   = 'result-text wrong';
+    wrongs.push({ ...q, myAnswers });
+    addWrongNote(
+      chKey, 'blank',
+      q.q,
+      myAnswers.join(' / '),
+      q.answers.join(' / '),
+      q.해설, q.원문
+    );
+  }
+
+  updateProgress(chKey, 'blank', allCorrect ? 1 : 0, 1);
+
+  // 해설
+  const explainBox = document.getElementById('explainBox');
+  explainBox.textContent = `📖 해설:  ${q.해설}`;
+  explainBox.classList.add('show');
+
+  // 원문
+  if (q.원문) {
+    document.getElementById('btnSource').style.display = 'inline-block';
+    document.getElementById('sourceBox').textContent   = `📌 원문:  ${q.원문}`;
+  }
+
+  document.getElementById('btnCheck').disabled = true;
+  document.getElementById('btnNext').disabled  = false;
+  document.getElementById('scoreText').textContent = `점수: ${correct} / ${total}`;
+}
+
+// ── 원문 토글 ──
+function toggleSource() {
+  const box = document.getElementById('sourceBox');
+  sourceVisible = !sourceVisible;
+  if (sourceVisible) {
+    box.classList.add('show');
+    document.getElementById('btnSource').textContent = '📌 원문 닫기';
+  } else {
+    box.classList.remove('show');
+    document.getElementById('btnSource').textContent = '📌 원문 보기';
+  }
+}
+
+// ── 다음 문제 ──
+function nextQuestion() {
+  idx++;
+  if (idx >= questions.length) {
+    showResult();
+  } else {
+    loadQuestion();
+  }
+}
+
+// ── 결과 화면 ──
+function showResult() {
+  document.getElementById('quizPage').style.display   = 'none';
+  document.getElementById('resultPage').style.display = 'block';
+
+  const ch      = getChData(currentChKey);
+  const chLabel = ch ? ch.title
+    : (currentChKey === 'ALL' ? '전체 챕터' : currentChKey);
+  const pct     = total > 0 ? Math.round(correct/total*100) : 0;
+
+  let msg = '';
+  if (pct >= 90)      msg = '🏆 훌륭합니다!';
+  else if (pct >= 70) msg = '👍 잘 하셨어요!';
+  else                msg = '📖 조금 더 복습해봐요!';
+
+  let wrongHTML = '';
+  if (!wrongs.length) {
+    wrongHTML = '<div style="text-align:center;color:#2E7D32;font-weight:bold;padding:14px;">🎊 모든 문제 정답!</div>';
+  } else {
+    wrongHTML = `<div style="font-weight:bold;color:#B71C1C;margin:14px 0 8px;">
+      ❌ 틀린 문제 (${wrongs.length}개) — 아래 원문을 다시 공부하세요!
+    </div>`;
+    wrongs.forEach((w,i) => {
+      wrongHTML += `
+        <div class="wrong-item">
+          <div class="wi-q">Q${i+1}. ${w.q}</div>
+          <div class="wi-ans">
+            <span class="ans-my">내 답: ${w.myAnswers?.join(' / ') || '-'}</span>
+            <span class="ans-correct">정답: ${w.answers.join(' / ')}</span>
+          </div>
+          <div class="wi-exp">📖 ${w.해설}</div>
+          ${w.원문 ? `<div style="font-size:0.75rem;color:#888;margin-top:3px;">
+            📌 원문: ${w.원문}</div>` : ''}
+        </div>`;
+    });
+  }
+
+  document.getElementById('resultContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px;">
+      <div style="font-size:0.9rem;color:#555;">${chLabel}</div>
+      <div style="font-size:2.2rem;font-weight:bold;color:#1A237E;margin:6px 0;">
+        ${correct} / ${total}
+      </div>
+      <div style="font-size:1rem;color:#555;">정답률 ${pct}%</div>
+      <div style="font-size:1.1rem;font-weight:bold;color:#E65100;margin-top:4px;">
+        ${msg}
+      </div>
+    </div>
+    ${wrongHTML}
+  `;
+
+  window.scrollTo(0,0);
+}
+
+// ── 재도전 ──
+function retrySession() {
+  if (currentChKey === 'ALL') startAllChapters();
+  else startChapter(currentChKey);
+}
+
+init();
+</script>
+
+</body>
+</html>
