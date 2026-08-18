@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book vs Tax | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .compare-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #1A237E;
+    }
+
+    .compare-item-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #1A237E;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #E8EAF6;
+    }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .compare-col {
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      white-space: pre-line;
+    }
+
+    .col-book {
+      background: #E8F5E9;
+      border-left: 3px solid #2E7D32;
+    }
+
+    .col-tax {
+      background: #FFEBEE;
+      border-left: 3px solid #B71C1C;
+    }
+
+    .col-adj {
+      background: #E8EAF6;
+      border-left: 3px solid #1A237E;
+      grid-column: span 2;
+    }
+
+    .col-label {
+      font-size: 0.72rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .col-book .col-label { color: #2E7D32; }
+    .col-tax  .col-label { color: #B71C1C; }
+    .col-adj  .col-label { color: #1A237E; }
+
+    .ch-filter-wrap {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
+    }
+
+    .ch-filter-btn {
+      padding: 7px 14px;
+      border: 1.5px solid #C5CAE9;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      background: white;
+      color: #1A237E;
+      font-family: inherit;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .ch-filter-btn.active {
+      background: #1A237E;
+      color: white;
+      border-color: #1A237E;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: #aaa;
+      padding: 24px;
+      font-size: 0.9rem;
+    }
+
+    /* 퀴즈 모드 */
+    .quiz-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: #F8F9FF;
+      border-radius: 10px;
+      border: 1.5px solid #C5CAE9;
+    }
+
+    .quiz-toggle-wrap label {
+      font-size: 0.88rem;
+      font-weight: bold;
+      color: #1A237E;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 46px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .toggle-switch input { display: none; }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #CFD8DC;
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: #1A237E;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+    }
+
+    .quiz-hidden {
+      filter: blur(5px);
+      user-select: none;
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .quiz-hidden.revealed {
+      filter: none;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Book vs Tax 비교</h1>
+  <div class="sub">회계처리 vs 세법처리 차이 학습</div>
+</div>
+
+<div class="container">
+
+  <!-- 퀴즈 모드 토글 -->
+  <div class="quiz-toggle-wrap">
+    <label>🎯 퀴즈 모드</label>
+    <label class="toggle-switch">
+      <input type="checkbox" id="quizMode" onchange="toggleQuizMode()">
+      <span class="toggle-slider"></span>
+    </label>
+    <span style="font-size:0.8rem; color:#888;" id="quizModeLabel">
+      OFF — Tax칸 클릭하면 정답 공개
+    </span>
+  </div>
+
+  <!-- 챕터 필터 -->
+  <div class="ch-filter-wrap" id="chFilterWrap"></div>
+
+  <!-- 비교 목록 -->
+  <div id="compareList"></div>
+
+</div>
+
+<!-- 하단 네비 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='choice.html'">
+    <span class="icon">📝</span>4지선다
+  </button>
+  <button class="nav-btn active" onclick="location.href='compare.html'">
+    <span class="icon">📊</span>비교
+  </button>
+  <button class="nav-btn" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+let currentFilter = 'ALL';
+let isQuizMode    = false;
+
+function init() {
+  buildFilter();
+  renderList('ALL');
+}
+
+// ── 챕터 필터 ──
+function buildFilter() {
+  const wrap = document.getElementById('chFilterWrap');
+  wrap.innerHTML = '';
+
+  // 전체 버튼
+  const allBtn = document.createElement('button');
+  allBtn.className = 'ch-filter-btn active';
+  allBtn.textContent = '전체';
+  allBtn.onclick = () => setFilter('ALL', allBtn);
+  wrap.appendChild(allBtn);
+
+  // 챕터별 버튼
+  const colors = [
+    '#E53935','#D81B60','#8E24AA','#3949AB',
+    '#1E88E5','#00ACC1','#00897B','#43A047',
+    '#7CB342','#F4511E','#8D6E63','#546E7A'
+  ];
+
+  CHAPTER_LIST.forEach((ch, i) => {
+    const data = getTypeData(ch.key, 'compare');
+    if (!data.length) return;
+    const btn = document.createElement('button');
+    btn.className = 'ch-filter-btn';
+    btn.textContent = `CH${i+1}`;
+    btn.style.borderColor = colors[i];
+    btn.style.color       = colors[i];
+    btn.onclick = () => setFilter(ch.key, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function setFilter(key, btnEl) {
+  currentFilter = key;
+  document.querySelectorAll('.ch-filter-btn')
+    .forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+  renderList(key);
+}
+
+// ── 비교 목록 렌더링 ──
+function renderList(filter) {
+  const list = document.getElementById('compareList');
+  list.innerHTML = '';
+
+  let items = [];
+  if (filter === 'ALL') {
+    CHAPTER_LIST.forEach(ch => {
+      const data = getTypeData(ch.key, 'compare');
+      data.forEach(d => items.push({ ...d, _chKey: ch.key, _chLabel: ch.label }));
+    });
+  } else {
+    const data = getTypeData(filter, 'compare');
+    const ch   = CHAPTER_LIST.find(c => c.key === filter);
+    data.forEach(d => items.push({ ...d, _chKey: filter, _chLabel: ch?.label || filter }));
+  }
+
+  if (!items.length) {
+    list.innerHTML = '<div class="empty-msg">해당 챕터에 비교 항목이 없습니다</div>';
+    return;
+  }
+
+  items.forEach((item, i) => {
+    const card = document.createElement('div');
+    card.className = 'compare-card';
+
+    const taxId = `tax_${i}`;
+    const adjId = `adj_${i}`;
+
+    const taxClass   = isQuizMode ? 'compare-col col-tax quiz-hidden'   : 'compare-col col-tax';
+    const adjClass   = isQuizMode ? 'compare-col col-adj quiz-hidden'   : 'compare-col col-adj';
+    const taxClick   = isQuizMode ? `onclick="reveal('${taxId}')"` : '';
+    const adjClick   = isQuizMode ? `onclick="reveal('${adjId}')"` : '';
+
+    card.innerHTML = `
+      <div class="compare-item-title">
+        <span style="font-size:0.75rem; color:#888; font-weight:normal;">
+          ${item._chLabel}
+        </span><br>
+        📋 ${item.item}
+      </div>
+      <div class="compare-row">
+        <div class="compare-col col-book">
+          <span class="col-label">📗 Book (회계)</span>
+          ${item.book}
+        </div>
+        <div class="${taxClass}" id="${taxId}" ${taxClick}>
+          <span class="col-label">📕 Tax (세법)</span>
+          ${isQuizMode ? '👆 탭하여 확인' : item.tax}
+          ${isQuizMode ? `<div style="display:none" class="tax-content">${item.tax}</div>` : ''}
+        </div>
+      </div>
+      <div class="${adjClass}" id="${adjId}" ${adjClick}>
+        <span class="col-label">⚙️ 세무조정 (T/A)</span>
+        ${isQuizMode ? '👆 탭하여 확인' : item.adj}
+        ${isQuizMode ? `<div style="display:none" class="adj-content">${item.adj}</div>` : ''}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ── 퀴즈 모드 토글 ──
+function toggleQuizMode() {
+  isQuizMode = document.getElementById('quizMode').checked;
+  document.getElementById('quizModeLabel').textContent = isQuizMode
+    ? 'ON — Tax칸 클릭하면 정답 공개'
+    : 'OFF — Tax칸 클릭하면 정답 공개';
+  renderList(currentFilter);
+}
+
+// ── 퀴즈 모드 정답 공개 ──
+function reveal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.classList.contains('revealed')) return;
+
+  el.classList.add('revealed');
+
+  // tax 또는 adj 내용 교체
+  const taxContent = el.querySelector('.tax-content');
+  const adjContent = el.querySelector('.adj-content');
+
+  if (taxContent) {
+    const label = el.querySelector('.col-label');
+    el.innerHTML = '';
+    if (label) el.appendChild(label);
+    el.innerHTML += taxContent.textContent;
+  } else if (adjContent) {
+    const label = el.querySelector('.col-label');
+    el.innerHTML = '';
+    if (label) el.appendChild(label);
+    el.innerHTML += adjContent.textContent;
+  }
+
+  showToast('✅ 정답 공개!');
+}
+
+init();
+</script>
+
+</body>
+</html>
