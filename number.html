@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>숫자 집중 암기 | 법인세법</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .num-card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.2s;
+      border-top: 4px solid #1A237E;
+    }
+
+    .num-card:hover { transform: translateY(-2px); }
+
+    .num-card .num-val {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #1A237E;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    .num-card .num-label {
+      font-size: 0.8rem;
+      color: #555;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
+    .num-card .num-source {
+      font-size: 0.72rem;
+      color: #AAA;
+      margin-top: 6px;
+    }
+
+    /* 퀴즈 모드 카드 */
+    .num-quiz-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #00838F;
+    }
+
+    .num-quiz-q {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    .num-opts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .num-opt {
+      padding: 10px 8px;
+      border: 1.5px solid #E0E0E0;
+      border-radius: 8px;
+      background: #F9F9F9;
+      font-size: 0.88rem;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      color: #1A237E;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .num-opt:hover:not(:disabled) {
+      background: #E8EAF6;
+      border-color: #1A237E;
+    }
+
+    .num-opt.correct {
+      background: #C8E6C9;
+      border-color: #2E7D32;
+      color: #1B5E20;
+    }
+
+    .num-opt.wrong {
+      background: #FFCDD2;
+      border-color: #B71C1C;
+      color: #B71C1C;
+    }
+
+    .num-opt:disabled { cursor: default; }
+
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 10px;
+      border: 1.5px solid #1A237E;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      background: white;
+      color: #1A237E;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .mode-tab.active {
+      background: #1A237E;
+      color: white;
+    }
+
+    .ch-filter-wrap {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
+    }
+
+    .ch-filter-btn {
+      padding: 7px 14px;
+      border: 1.5px solid #C5CAE9;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      background: white;
+      color: #1A237E;
+      font-family: inherit;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .ch-filter-btn.active {
+      background: #1A237E;
+      color: white;
+      border-color: #1A237E;
+    }
+
+    .quiz-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    .num-result {
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-top: 6px;
+      padding: 4px 0;
+    }
+
+    .num-explain {
+      font-size: 0.8rem;
+      color: #1A237E;
+      background: #E8EAF6;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-top: 6px;
+      line-height: 1.6;
+      display: none;
+      white-space: pre-line;
+    }
+
+    .num-explain.show { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔢 숫자 집중 암기</h1>
+  <div class="sub">법인세법 핵심 숫자·한도·비율</div>
+</div>
+
+<div class="container">
+
+  <!-- 모드 탭 -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabView"
+            onclick="setMode('view')">📋 전체 보기</button>
+    <button class="mode-tab" id="tabQuiz"
+            onclick="setMode('quiz')">🎯 퀴즈 모드</button>
+  </div>
+
+  <!-- 챕터 필터 -->
+  <div class="ch-filter-wrap" id="chFilterWrap"></div>
+
+  <!-- 전체 보기 모드 -->
+  <div id="viewMode">
+    <div class="number-grid" id="numberGrid"></div>
+  </div>
+
+  <!-- 퀴즈 모드 -->
+  <div id="quizMode" style="display:none;">
+    <div class="quiz-info">
+      <span id="quizProgress">0 / 0</span>
+      <span id="quizScore">점수: 0 / 0</span>
+    </div>
+    <div class="progress-wrap" style="margin-bottom:12px;">
+      <div class="progress-bar" id="quizProgressBar"
+           style="width:0%; background:#00838F;"></div>
+    </div>
+    <div id="quizContent"></div>
+    <div class="bottom-btns" style="margin-top:4px;">
+      <button class="btn-next" id="btnQuizNext"
+              onclick="nextQuiz()" disabled>다음 ▶</button>
+      <button class="btn-change" onclick="restartQuiz()">🔄 다시 풀기</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 하단 네비 -->
+<div class="bottom-nav">
+  <button class="nav-btn" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='choice.html'">
+    <span class="icon">📝</span>4지선다
+  </button>
+  <button class="nav-btn active" onclick="location.href='number.html'">
+    <span class="icon">🔢</span>숫자
+  </button>
+  <button class="nav-btn" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+</div>
+
+<!-- 데이터 로드 -->
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="app.js"></script>
+<script>
+
+let currentMode   = 'view';
+let currentFilter = 'ALL';
+let quizItems     = [];
+let quizIdx       = 0;
+let quizCorrect   = 0;
+let quizTotal     = 0;
+let quizAnswered  = false;
+
+// ── 초기화 ──
+function init() {
+  buildFilter();
+  renderView('ALL');
+}
+
+// ── 모드 전환 ──
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('tabView').className =
+    `mode-tab ${mode === 'view' ? 'active' : ''}`;
+  document.getElementById('tabQuiz').className =
+    `mode-tab ${mode === 'quiz' ? 'active' : ''}`;
+  document.getElementById('viewMode').style.display =
+    mode === 'view' ? 'block' : 'none';
+  document.getElementById('quizMode').style.display =
+    mode === 'quiz' ? 'block' : 'none';
+
+  if (mode === 'quiz') startQuiz(currentFilter);
+}
+
+// ── 챕터 필터 ──
+function buildFilter() {
+  const wrap = document.getElementById('chFilterWrap');
+  wrap.innerHTML = '';
+  const colors = [
+    '#E53935','#D81B60','#8E24AA','#3949AB',
+    '#1E88E5','#00ACC1','#00897B','#43A047',
+    '#7CB342','#F4511E','#8D6E63','#546E7A'
+  ];
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'ch-filter-btn active';
+  allBtn.textContent = '전체';
+  allBtn.onclick = () => setFilter('ALL', allBtn);
+  wrap.appendChild(allBtn);
+
+  CHAPTER_LIST.forEach((ch, i) => {
+    const data = getTypeData(ch.key, 'numbers');
+    if (!data.length) return;
+    const btn = document.createElement('button');
+    btn.className = 'ch-filter-btn';
+    btn.textContent = `CH${i+1}`;
+    btn.style.borderColor = colors[i];
+    btn.style.color       = colors[i];
+    btn.onclick = () => setFilter(ch.key, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function setFilter(key, btnEl) {
+  currentFilter = key;
+  document.querySelectorAll('.ch-filter-btn')
+    .forEach(b => b.classList.remove('active'));
+  btnEl.classList.add('active');
+
+  if (currentMode === 'view') renderView(key);
+  else startQuiz(key);
+}
+
+// ── 숫자 모아오기 ──
+function getNumbers(filter) {
+  let items = [];
+  if (filter === 'ALL') {
+    CHAPTER_LIST.forEach(ch => {
+      const data = getTypeData(ch.key, 'numbers');
+      data.forEach(d => items.push({ ...d, _chKey: ch.key }));
+    });
+  } else {
+    const data = getTypeData(filter, 'numbers');
+    data.forEach(d => items.push({ ...d, _chKey: filter }));
+  }
+  return items;
+}
+
+// ── 전체 보기 ──
+function renderView(filter) {
+  const items = getNumbers(filter);
+  const grid  = document.getElementById('numberGrid');
+  grid.innerHTML = '';
+
+  const colors = [
+    '#E53935','#D81B60','#8E24AA','#3949AB',
+    '#1E88E5','#00ACC1','#00897B','#43A047',
+    '#7CB342','#F4511E','#8D6E63','#546E7A'
+  ];
+
+  if (!items.length) {
+    grid.innerHTML = '<div style="grid-column:span 2; text-align:center; color:#aaa; padding:20px;">해당 챕터에 숫자 항목이 없습니다</div>';
+    return;
+  }
+
+  items.forEach(item => {
+    const chIdx = CHAPTER_LIST.findIndex(c => c.key === item._chKey);
+    const color = colors[chIdx] || '#1A237E';
+    const card  = document.createElement('div');
+    card.className = 'num-card';
+    card.style.borderTopColor = color;
+    card.innerHTML = `
+      <div class="num-val" style="color:${color};">${item.val}</div>
+      <div class="num-label">${item.label}</div>
+      ${item.원문 ? `<div class="num-source">📌 ${item.원문}</div>` : ''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── 퀴즈 시작 ──
+function startQuiz(filter) {
+  const items = getNumbers(filter);
+  if (!items.length) {
+    document.getElementById('quizContent').innerHTML =
+      '<div style="text-align:center; color:#aaa; padding:20px;">숫자 항목이 없습니다</div>';
+    return;
+  }
+
+  // 퀴즈 문제 생성: 숫자 → 설명 고르기 + 설명 → 숫자 고르기
+  quizItems = [];
+  const shuffled = shuffle([...items]);
+
+  shuffled.forEach(item => {
+    // 유형1: 설명 → 숫자 고르기
+    const wrongVals = shuffle(
+      items.filter(i => i.val !== item.val).map(i => i.val)
+    ).slice(0, 3);
+    const opts1 = shuffle([item.val, ...wrongVals]);
+    quizItems.push({
+      type:   'val',
+      q:      `다음 설명에 해당하는 숫자는?\n\n"${item.label}"`,
+      opts:   opts1,
+      answer: item.val,
+      해설:   `${item.label}`,
+      원문:   item.원문 || '',
+    });
+
+    // 유형2: 숫자 → 설명 고르기 (설명이 2개 이상일 때)
+    if (items.length >= 4) {
+      const wrongLabels = shuffle(
+        items.filter(i => i.val !== item.val).map(i => i.label)
+      ).slice(0, 3);
+      const opts2 = shuffle([item.label, ...wrongLabels]);
+      quizItems.push({
+        type:   'label',
+        q:      `"${item.val}" 에 해당하는 설명은?`,
+        opts:   opts2,
+        answer: item.label,
+        해설:   `${item.val} → ${item.label}`,
+        원문:   item.원문 || '',
+      });
+    }
+  });
+
+  quizItems = shuffle(quizItems);
+  quizIdx     = 0;
+  quizCorrect = 0;
+  quizTotal   = 0;
+  quizAnswered = false;
+
+  loadQuiz();
+}
+
+// ── 퀴즈 로드 ──
+function loadQuiz() {
+  quizAnswered = false;
+  const q = quizItems[quizIdx];
+  const t = quizItems.length;
+
+  document.getElementById('quizProgress').textContent = `${quizIdx+1} / ${t}`;
+  document.getElementById('quizScore').textContent    = `점수: ${quizCorrect} / ${quizTotal}`;
+  document.getElementById('quizProgressBar').style.width = `${((quizIdx+1)/t)*100}%`;
+  document.getElementById('btnQuizNext').disabled = true;
+
+  const nums = ['①','②','③','④'];
+  let optsHTML = q.opts.map((opt, i) => `
+    <button class="num-opt" id="nopt_${i}"
+            onclick="answerQuiz(${i})">
+      ${nums[i]} ${opt}
+    </button>
+  `).join('');
+
+  document.getElementById('quizContent').innerHTML = `
+    <div class="num-quiz-card">
+      <div class="num-quiz-q">${q.q}</div>
+      <div class="num-opts" id="numOpts">${optsHTML}</div>
+      <div class="num-result" id="numResult"></div>
+      <div class="num-explain" id="numExplain">
+        📖 ${q.해설}
+        ${q.원문 ? `\n📌 원문: ${q.원문}` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// ── 퀴즈 정답 처리 ──
+function answerQuiz(optIdx) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const q         = quizItems[quizIdx];
+  const selected  = q.opts[optIdx];
+  const isCorrect = (selected === q.answer);
+
+  quizTotal++;
+  if (isCorrect) quizCorrect++;
+
+  const resultEl = document.getElementById('numResult');
+  if (isCorrect) {
+    resultEl.textContent = '✅ 정답입니다!';
+    resultEl.style.color = '#1B5E20';
+    document.getElementById(`nopt_${optIdx}`).className = 'num-opt correct';
+  } else {
+    resultEl.textContent = `❌ 오답! 정답은 [${q.answer}]`;
+    resultEl.style.color = '#B71C1C';
+    document.getElementById(`nopt_${optIdx}`).className = 'num-opt wrong';
+    for (let i = 0; i < q.opts.length; i++) {
+      if (q.opts[i] === q.answer) {
+        document.getElementById(`nopt_${i}`).className = 'num-opt correct';
+      }
+    }
+    addWrongNote(
+      currentFilter, 'number',
+      q.q, selected, q.answer, q.해설, q.원문
+    );
+  }
+
+  document.getElementById('numExplain').classList.add('show');
+  for (let i = 0; i < q.opts.length; i++) {
+    const btn = document.getElementById(`nopt_${i}`);
+    if (btn) btn.disabled = true;
+  }
+
+  document.getElementById('quizScore').textContent =
+    `점수: ${quizCorrect} / ${quizTotal}`;
+  document.getElementById('btnQuizNext').disabled = false;
+}
+
+// ── 다음 퀴즈 ──
+function nextQuiz() {
+  quizIdx++;
+  if (quizIdx >= quizItems.length) {
+    showQuizResult();
+  } else {
+    loadQuiz();
+  }
+}
+
+// ── 퀴즈 결과 ──
+function showQuizResult() {
+  const pct = quizTotal > 0 ? Math.round(quizCorrect/quizTotal*100) : 0;
+  let msg = '';
+  if (pct >= 90)      msg = '🏆 숫자 완전 암기!';
+  else if (pct >= 70) msg = '👍 잘 하셨어요!';
+  else                msg = '📖 숫자를 더 외워요!';
+
+  document.getElementById('quizContent').innerHTML = `
+    <div style="text-align:center; padding:20px 0;">
+      <div style="font-size:2rem; font-weight:bold;
+                  color:#1A237E; margin:8px 0;">
+        ${quizCorrect} / ${quizTotal}
+      </div>
+      <div style="font-size:1rem; color:#555;">정답률 ${pct}%</div>
+      <div style="font-size:1.1rem; font-weight:bold;
+                  color:#E65100; margin-top:6px;">${msg}</div>
+    </div>
+  `;
+  document.getElementById('btnQuizNext').disabled = true;
+}
+
+// ── 퀴즈 재시작 ──
+function restartQuiz() {
+  startQuiz(currentFilter);
+}
+
+init();
+</script>
+
+</body>
+</html>
