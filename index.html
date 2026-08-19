@@ -165,22 +165,25 @@
 
   <!-- 하단 네비게이션 -->
   <div class="bottom-nav">
-    <button class="nav-btn active" onclick="location.href='index.html'">
-      <span class="icon">🏠</span>홈
-    </button>
-    <button class="nav-btn" onclick="location.href='ox.html'">
-      <span class="icon">⭕</span>OX
-    </button>
-    <button class="nav-btn" onclick="location.href='choice.html'">
-      <span class="icon">📝</span>4지선다
-    </button>
-    <button class="nav-btn" onclick="location.href='blank.html'">
-      <span class="icon">✏️</span>빈칸
-    </button>
-    <button class="nav-btn" onclick="location.href='progress.html'">
-      <span class="icon">📈</span>진도
-    </button>
-  </div>
+  <button class="nav-btn active" onclick="location.href='index.html'">
+    <span class="icon">🏠</span>홈
+  </button>
+  <button class="nav-btn" onclick="location.href='ox.html'">
+    <span class="icon">⭕</span>OX
+  </button>
+  <button class="nav-btn" onclick="location.href='choice.html'">
+    <span class="icon">📝</span>4지선다
+  </button>
+  <button class="nav-btn" onclick="location.href='blank.html'">
+    <span class="icon">✏️</span>빈칸
+  </button>
+  <button class="nav-btn" onclick="location.href='card.html'">
+    <span class="icon">🃏</span>카드
+  </button>
+  <button class="nav-btn" onclick="location.href='progress.html'">
+    <span class="icon">📈</span>진도
+  </button>
+ </div>
 
 </div>
 
@@ -326,8 +329,8 @@ function renderTypeGrid(chKey, color) {
 function goToType(chKey, typeKey) {
   const pageMap = {
     ox:'ox.html', choice:'choice.html',
-    blank:'blank.html', card:'card.html',
-    compare:'compare.html', number:'number.html',
+    blank:'blank.html', cards:'card.html',
+    compare:'compare.html', numbers:'number.html',
     flow:'flow.html', white:'white.html',
   };
   const page = pageMap[typeKey];
