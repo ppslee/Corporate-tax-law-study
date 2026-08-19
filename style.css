@@ -45,10 +45,10 @@ body {
   gap: 2px;
   cursor: pointer;
   color: #9E9E9E;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   border: none;
   background: none;
-  padding: 4px 8px;
+  padding: 4px 4px;
   font-family: inherit;
   transition: color 0.2s;
 }
