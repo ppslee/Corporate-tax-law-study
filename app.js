@@ -116,9 +116,9 @@ const TYPE_LIST = [
   { key:'ox',      label:'OX 퀴즈',         color:'#1565C0', icon:'⭕' },
   { key:'choice',  label:'4지선다',          color:'#8E24AA', icon:'📝' },
   { key:'blank',   label:'빈칸 채우기',      color:'#2E7D32', icon:'✏️' },
-  { key:'card',    label:'플래시카드',       color:'#E65100', icon:'🃏' },
+  { key:'cards',   label:'플래시카드',       color:'#E65100', icon:'🃏' },
   { key:'compare', label:'Book vs Tax',      color:'#C62828', icon:'📊' },
-  { key:'number',  label:'숫자 집중 암기',   color:'#00838F', icon:'🔢' },
+  { key:'numbers', label:'숫자 집중 암기',   color:'#00838F', icon:'🔢' },
   { key:'flow',    label:'계산흐름도',       color:'#37474F', icon:'🔄' },
   { key:'white',   label:'백지 테스트',      color:'#4527A0', icon:'📄' },
 ];
